@@ -32,7 +32,7 @@ const TIPO_COLOR = {
 
 export function Header({
   projectName = "Proyecto FCI 2025",
-  projectDescription = "Programa de formacion y apoyo tecnico para el emprendimiento de mujeres indigenas residentes en Guayaquil",
+  projectDescription = "Programa de formación y apoyo técnico para el emprendimiento de mujeres indígenas residentes en Guayaquil",
   nombre = "Usuario",
   rol = "Miembro del proyecto",
   avatarUrl = null,

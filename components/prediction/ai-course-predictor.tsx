@@ -33,7 +33,7 @@ export function AiCoursePredictor({ predictions }: { predictions: CoursePredicti
           <div>
             <div className="flex items-center gap-2 text-sm font-medium text-cyan-100"><Bot className="h-5 w-5" />Agente IA de prediccion formativa</div>
             <h2 className="mt-2 text-2xl font-semibold">Cursos recomendados desde el diagnostico</h2>
-            <p className="mt-2 max-w-3xl text-sm text-blue-100">Analiza brechas por bloque y propone cursos especificos. Selecciona una propuesta por bloque para enviarla a Diseno de Cursos.</p>
+            <p className="mt-2 max-w-3xl text-sm text-blue-100">Analiza brechas por bloque y propone cursos específicos. Selecciona una propuesta por bloque para enviarla a Diseño de Cursos.</p>
           </div>
           <div className="flex items-center gap-3 rounded-md border border-white/20 bg-white/10 px-4 py-3">
             <Database className="h-5 w-5 text-cyan-200" />

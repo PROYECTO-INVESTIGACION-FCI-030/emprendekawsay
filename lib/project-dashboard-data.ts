@@ -53,8 +53,8 @@ export const fallbackProjectDashboardData: ProjectDashboardData = {
     total: 8,
     estados: [
       { estado: "Completados", valor: 2, porcentaje: 40, fill: "#22C55E" },
-      { estado: "En diseno", valor: 2, porcentaje: 40, fill: "#2563EB" },
-      { estado: "En validacion", valor: 1, porcentaje: 20, fill: "#F59E0B" },
+      { estado: "En diseño", valor: 2, porcentaje: 40, fill: "#2563EB" },
+      { estado: "En validación", valor: 1, porcentaje: 20, fill: "#F59E0B" },
       { estado: "Pendientes", valor: 0, porcentaje: 0, fill: "#8B5CF6" },
     ],
   },
@@ -86,16 +86,16 @@ export const fallbackProjectDashboardData: ProjectDashboardData = {
   ],
   necesidades: [
     { necesidad: "Marketing digital", valor: 100 },
-    { necesidad: "Uso de tecnologia", valor: 62 },
-    { necesidad: "Educacion financiera", valor: 47 },
-    { necesidad: "Formalizacion", valor: 24 },
+    { necesidad: "Uso de tecnología", valor: 62 },
+    { necesidad: "Educación financiera", valor: 47 },
+    { necesidad: "Formalización", valor: 24 },
     { necesidad: "Gestion de costos", valor: 17 },
   ],
   competencias: [
     { competencia: "Digital", valor: 9 },
     { competencia: "Comercial", valor: 15 },
     { competencia: "Gestion", valor: 54 },
-    { competencia: "Innovacion", valor: 6 },
+    { competencia: "Innovación", valor: 6 },
     { competencia: "Financiera", valor: 29 },
   ],
   diagnostico: {
@@ -131,10 +131,10 @@ export const fallbackProjectDashboardData: ProjectDashboardData = {
     ],
   },
   actividades: [
-    { titulo: "Validacion de insumos de encuesta", fecha: "15/06/2027", estado: "En proceso", color: "bg-emerald-500" },
-    { titulo: "Aplicacion de encuesta de validacion", fecha: "30/06/2027", estado: "Programado", color: "bg-blue-500" },
-    { titulo: "Analisis de resultados de validacion", fecha: "15/06/2027", estado: "Programado", color: "bg-violet-500" },
+    { titulo: "Validación de insumos de encuesta", fecha: "15/06/2027", estado: "En proceso", color: "bg-emerald-500" },
+    { titulo: "Aplicación de encuesta de validación", fecha: "30/06/2027", estado: "Programado", color: "bg-blue-500" },
+    { titulo: "Análisis de resultados de validación", fecha: "15/06/2027", estado: "Programado", color: "bg-violet-500" },
     { titulo: "Ajustes finales del programa", fecha: "01/06/2027", estado: "Programado", color: "bg-orange-500" },
-    { titulo: "Redaccion de articulo cientifico", fecha: "07/06/2027", estado: "Programado", color: "bg-yellow-500" },
+    { titulo: "Redacción de artículo científico", fecha: "07/06/2027", estado: "Programado", color: "bg-yellow-500" },
   ],
 }

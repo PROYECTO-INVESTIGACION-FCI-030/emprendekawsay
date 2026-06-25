@@ -50,5 +50,5 @@ export async function actualizarConfiguracionProyecto(
   revalidatePath("/")
   revalidatePath("/configuracion")
   revalidatePath("/", "layout")
-  return { ok: true, message: "Configuracion del proyecto guardada correctamente." }
+  return { ok: true, message: "Configuración del proyecto guardada correctamente." }
 }

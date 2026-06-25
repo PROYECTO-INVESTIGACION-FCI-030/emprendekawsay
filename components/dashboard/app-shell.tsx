@@ -26,7 +26,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
         <main className="flex-1 overflow-y-auto">
           {children}
           <footer className="border-t border-border px-6 py-4 text-center text-xs text-muted-foreground">
-            © 2026 Universidad de Guayaquil · Plataforma de Gestion de Proyectos FCI
+            &copy; 2026 Universidad de Guayaquil &middot; Plataforma de Gestión de Proyectos FCI
           </footer>
         </main>
       </div>

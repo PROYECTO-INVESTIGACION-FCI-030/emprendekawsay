@@ -14,7 +14,7 @@ export type ProjectInfo = {
 
 export const fallbackProjectInfo: ProjectInfo = {
   nombre: "Proyecto FCI 2025",
-  descripcion: "Programa de formacion y apoyo tecnico para el emprendimiento de mujeres indigenas residentes en Guayaquil",
+  descripcion: "Programa de formación y apoyo técnico para el emprendimiento de mujeres indígenas residentes en Guayaquil",
   fechaInicioInput: "2026-06-01",
   fechaFinInput: "2028-06-30",
   fechaInicio: "01/06/2026",

@@ -112,8 +112,8 @@ export function getNotificacionesDemo(rolRaw?: string | null): Notificacion[] {
     return [
       {
         id: "diagnostico-pendiente",
-        titulo: "Diagnostico pendiente",
-        mensaje: "Tienes una encuesta de diagnostico pendiente por responder.",
+        titulo: "Diagnóstico pendiente",
+        mensaje: "Tienes una encuesta de diagnóstico pendiente por responder.",
         fecha: "Pendiente",
         tipo: "alerta",
         leida: false,
@@ -123,7 +123,7 @@ export function getNotificacionesDemo(rolRaw?: string | null): Notificacion[] {
       {
         id: "tarea-finanzas",
         titulo: "Nueva tarea disponible",
-        mensaje: "Tienes una nueva tarea en el modulo de Finanzas.",
+        mensaje: "Tienes una nueva tarea en el módulo de Finanzas.",
         fecha: "Hoy",
         tipo: "info",
         leida: false,
@@ -136,16 +136,16 @@ export function getNotificacionesDemo(rolRaw?: string | null): Notificacion[] {
   return [
     {
       id: "1",
-      titulo: "Nueva encuesta de validacion",
-      mensaje: "Se habilito la encuesta del modulo 3 para las participantes.",
+      titulo: "Nueva encuesta de validación",
+      mensaje: "Se habilitó la encuesta del módulo 3 para las participantes.",
       fecha: "Hace 2 horas",
       tipo: "info",
       leida: false,
     },
     {
       id: "2",
-      titulo: "Producto cientifico aprobado",
-      mensaje: "El articulo sobre saberes ancestrales fue aceptado.",
+      titulo: "Producto científico aprobado",
+      mensaje: "El artículo sobre saberes ancestrales fue aceptado.",
       fecha: "Ayer",
       tipo: "exito",
       leida: false,

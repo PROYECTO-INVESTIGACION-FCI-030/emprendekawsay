@@ -14,7 +14,7 @@ export async function crearCursoPredicho(titulo: string, descripcion: string) {
   }
 
   const { data: existing } = await supabase.from("cursos").select("id").ilike("titulo", titulo).maybeSingle()
-  if (existing) return { ok: false, message: "Este curso ya existe en Diseno de Cursos." }
+  if (existing) return { ok: false, message: "Este curso ya existe en Diseño de Cursos." }
 
   const { error } = await supabase.from("cursos").insert({
     titulo,
@@ -28,5 +28,5 @@ export async function crearCursoPredicho(titulo: string, descripcion: string) {
   revalidatePath("/")
   revalidatePath("/prediccion")
   revalidatePath("/diseno-cursos")
-  return { ok: true, message: "Curso creado como borrador en Diseno de Cursos." }
+  return { ok: true, message: "Curso creado como borrador en Diseño de Cursos." }
 }

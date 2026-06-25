@@ -5,7 +5,7 @@
 CREATE TABLE IF NOT EXISTS public.configuracion_proyecto (
   id SMALLINT PRIMARY KEY DEFAULT 1,
   nombre TEXT NOT NULL DEFAULT 'Proyecto FCI 2025',
-  descripcion TEXT NOT NULL DEFAULT 'Programa de formacion y apoyo tecnico para el emprendimiento de mujeres indigenas residentes en Guayaquil',
+  descripcion TEXT NOT NULL DEFAULT 'Programa de formación y apoyo técnico para el emprendimiento de mujeres indígenas residentes en Guayaquil',
   fecha_inicio DATE NOT NULL,
   fecha_fin DATE NOT NULL,
   fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT now(),

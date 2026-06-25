@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo, useState } from "react"
 import {
   BarChart3,
   BookOpen,
@@ -54,11 +55,12 @@ const needsConfig = {
 }
 
 const needsColors = [
-  "#EF4444",
+  "#2563EB",
+  "#0891B2",
+  "#16A34A",
+  "#F59E0B",
   "#F97316",
-  "#EAB308",
-  "#3B82F6",
-  "#22C55E",
+  "#DC2626",
 ]
 
 const radarConfig = {
@@ -77,6 +79,48 @@ type DashboardCardData = {
   color: string
   progress?: number
   footer: string
+}
+
+function ChartFilter({
+  value,
+  onChange,
+  options,
+  label,
+}: {
+  value: string
+  onChange: (value: string) => void
+  options: { value: string; label: string }[]
+  label: string
+}) {
+  return (
+    <select
+      aria-label={label}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      className="h-8 rounded-md border border-border bg-background px-2 text-xs font-medium text-foreground outline-none transition-colors hover:border-primary focus:border-primary"
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  )
+}
+
+function filterTimeData(data: ProjectDashboardData["tiempo"], mode: string) {
+  if (mode === "anual") {
+    const byYear = new Map<string, ProjectDashboardData["tiempo"][number]>()
+    for (const item of data) {
+      const year = item.fecha.match(/\d{4}/)?.[0] ?? item.fecha
+      byYear.set(year, { ...item, fecha: year })
+    }
+    return [...byYear.values()]
+  }
+  if (mode === "semestral") {
+    return data.filter((_, index) => index % 2 === 0 || index === data.length - 1)
+  }
+  return data
 }
 
 function DashboardCard({
@@ -118,15 +162,15 @@ function getTopCards(data: ProjectDashboardData): DashboardCardData[] {
       footer: `Fecha inicio ${data.proyecto.inicio}`,
     },
     {
-      title: "Cursos Disenados",
+      title: "Cursos Diseñados",
       value: `${data.cursos.disenados}`,
-      detail: `${data.cursos.enValidacion} en validacion`,
+      detail: `${data.cursos.enValidacion} en validación`,
       icon: BookOpen,
       color: "text-chart-2",
-      footer: `${data.cursos.total} modulos totales`,
+      footer: `${data.cursos.total} cursos totales`,
     },
     {
-      title: "Produccion Cientifica",
+      title: "Producción Científica",
       value: `${data.produccion.completados} / ${data.produccion.meta}`,
       detail: "Productos completados",
       icon: FileText,
@@ -134,7 +178,7 @@ function getTopCards(data: ProjectDashboardData): DashboardCardData[] {
       footer: `${data.produccion.cumplimiento}% de cumplimiento`,
     },
     {
-      title: "Validacion del Programa",
+      title: "Validación del Programa",
       value: `${data.validacion.encuestadas}`,
       detail: "Participantes encuestadas",
       icon: ClipboardList,
@@ -146,8 +190,32 @@ function getTopCards(data: ProjectDashboardData): DashboardCardData[] {
 }
 
 export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
+  const [timeFilter, setTimeFilter] = useState("mensual")
+  const [productionFilter, setProductionFilter] = useState("todos")
+  const [competencyFilter, setCompetencyFilter] = useState("todos")
+  const [needsFilter, setNeedsFilter] = useState("top5")
   const topCards = getTopCards(data)
   const totalCursos = data.cursos.estados.reduce((acc, item) => acc + item.valor, 0)
+  const timeData = useMemo(() => filterTimeData(data.tiempo, timeFilter), [data.tiempo, timeFilter])
+  const productionData = useMemo(
+    () =>
+      data.produccionPorInvestigador.map((item) => ({
+        ...item,
+        planificado: productionFilter === "ejecutado" ? 0 : item.planificado,
+        ejecutado: productionFilter === "planificado" ? 0 : item.ejecutado,
+      })),
+    [data.produccionPorInvestigador, productionFilter],
+  )
+  const competencyData = useMemo(() => {
+    if (competencyFilter === "bajas") return data.competencias.filter((item) => item.valor < 50)
+    if (competencyFilter === "altas") return data.competencias.filter((item) => item.valor >= 50)
+    return data.competencias
+  }, [data.competencias, competencyFilter])
+  const needsData = useMemo(() => {
+    if (needsFilter === "todas") return data.necesidades
+    const limit = Number(needsFilter.replace("top", ""))
+    return data.necesidades.slice(0, Number.isFinite(limit) ? limit : 5)
+  }, [data.necesidades, needsFilter])
 
   return (
     <div className="space-y-4 px-6 pb-8">
@@ -176,12 +244,22 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_1fr_1fr]">
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle className="text-base">Avance del Proyecto en el Tiempo</CardTitle>
+            <ChartFilter
+              label="Filtrar avance del proyecto"
+              value={timeFilter}
+              onChange={setTimeFilter}
+              options={[
+                { value: "mensual", label: "Mensual" },
+                { value: "semestral", label: "Semestral" },
+                { value: "anual", label: "Anual" },
+              ]}
+            />
           </CardHeader>
           <CardContent>
             <ChartContainer config={lineConfig} className="h-[260px] w-full">
-              <LineChart data={data.tiempo} margin={{ left: 0, right: 12, top: 8 }}>
+              <LineChart data={timeData} margin={{ left: 0, right: 12, top: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="fecha" tickLine={false} axisLine={false} tickMargin={8} style={{ fontSize: 11 }} />
                 <YAxis tickLine={false} axisLine={false} tickMargin={8} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
@@ -195,12 +273,22 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Produccion por Investigador</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
+            <CardTitle className="text-base">Producción por Investigador</CardTitle>
+            <ChartFilter
+              label="Filtrar producción por investigador"
+              value={productionFilter}
+              onChange={setProductionFilter}
+              options={[
+                { value: "todos", label: "Todos" },
+                { value: "planificado", label: "Planificado" },
+                { value: "ejecutado", label: "Ejecutado" },
+              ]}
+            />
           </CardHeader>
           <CardContent>
             <ChartContainer config={productionConfig} className="h-[260px] w-full">
-              <BarChart data={data.produccionPorInvestigador} margin={{ left: 0, right: 12, top: 8 }}>
+              <BarChart data={productionData} margin={{ left: 0, right: 12, top: 8 }}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis dataKey="investigador" tickLine={false} axisLine={false} tickMargin={8} style={{ fontSize: 11 }} />
                 <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
@@ -214,12 +302,22 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Competencias Promedio</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
+            <CardTitle className="text-base">Competencias Promedio (Diagnóstico)</CardTitle>
+            <ChartFilter
+              label="Filtrar competencias promedio"
+              value={competencyFilter}
+              onChange={setCompetencyFilter}
+              options={[
+                { value: "todos", label: "Todas" },
+                { value: "bajas", label: "Bajas" },
+                { value: "altas", label: "Altas" },
+              ]}
+            />
           </CardHeader>
           <CardContent>
             <ChartContainer config={radarConfig} className="h-[260px] w-full">
-              <RadarChart data={data.competencias} outerRadius={90}>
+              <RadarChart data={competencyData} outerRadius={90}>
                 <PolarGrid />
                 <PolarAngleAxis dataKey="competencia" tick={{ fontSize: 11 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
@@ -232,18 +330,28 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_0.9fr_1.1fr]">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Necesidades de Formacion Identificadas</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
+            <CardTitle className="text-base">Necesidades de Formación Identificadas</CardTitle>
+            <ChartFilter
+              label="Filtrar necesidades de formación"
+              value={needsFilter}
+              onChange={setNeedsFilter}
+              options={[
+                { value: "top5", label: "Top 5" },
+                { value: "top3", label: "Top 3" },
+                { value: "todas", label: "Todas" },
+              ]}
+            />
           </CardHeader>
           <CardContent>
             <ChartContainer config={needsConfig} className="h-[260px] w-full">
-              <BarChart data={data.necesidades} layout="vertical" margin={{ left: 8, right: 36, top: 4 }}>
+              <BarChart data={needsData} layout="vertical" margin={{ left: 8, right: 36, top: 4 }}>
                 <CartesianGrid horizontal={false} strokeDasharray="3 3" />
                 <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
                 <YAxis dataKey="necesidad" type="category" tickLine={false} axisLine={false} width={125} style={{ fontSize: 11 }} />
                 <ChartTooltip content={<ChartTooltipContent formatter={(v) => `${v}%`} />} />
                 <Bar dataKey="valor" radius={[0, 4, 4, 0]} label={{ position: "right", formatter: (v: unknown) => `${v}%`, fontSize: 11 }}>
-                  {data.necesidades.map((item, index) => (
+                  {needsData.map((item, index) => (
                     <Cell key={item.necesidad} fill={needsColors[index] ?? "var(--chart-1)"} />
                   ))}
                 </Bar>
@@ -299,7 +407,7 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Proximas Actividades</CardTitle>
+            <CardTitle className="text-base">Próximas Actividades</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-3">

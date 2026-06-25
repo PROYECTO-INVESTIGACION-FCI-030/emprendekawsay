@@ -58,8 +58,8 @@ function calculateCourseStats(cursos: Curso[]): ProjectDashboardData["cursos"] {
     total,
     estados: [
       { estado: "Completados", valor: counts.completado, porcentaje: percentage(counts.completado), fill: "#22C55E" },
-      { estado: "En diseno", valor: counts.en_diseno, porcentaje: percentage(counts.en_diseno), fill: "#2563EB" },
-      { estado: "En validacion", valor: counts.en_validacion, porcentaje: percentage(counts.en_validacion), fill: "#F59E0B" },
+      { estado: "En diseño", valor: counts.en_diseno, porcentaje: percentage(counts.en_diseno), fill: "#2563EB" },
+      { estado: "En validación", valor: counts.en_validacion, porcentaje: percentage(counts.en_validacion), fill: "#F59E0B" },
       { estado: "Borradores", valor: counts.borrador, porcentaje: percentage(counts.borrador), fill: "#8B5CF6" },
     ],
   }
@@ -216,17 +216,17 @@ function calculateDashboard(rows: DashboardRow[]): ProjectDashboardData {
     },
     necesidades: [
       { necesidad: "Marketing digital", valor: percent(marketingDigital, total) },
-      { necesidad: "Uso de tecnologia", valor: percent(usoTecnologia, total) },
-      { necesidad: "Educacion financiera", valor: percent(educacionFinanciera, total) },
-      { necesidad: "Formalizacion", valor: percent(formalizacion, total) },
+      { necesidad: "Uso de tecnología", valor: percent(usoTecnologia, total) },
+      { necesidad: "Educación financiera", valor: percent(educacionFinanciera, total) },
+      { necesidad: "Formalización", valor: percent(formalizacion, total) },
       { necesidad: "Redes de apoyo", valor: percent(redesApoyo, total) },
     ].sort((a, b) => b.valor - a.valor),
     competencias: [
       { competencia: "Financiera", valor: score(["ingreso_mensual", "control_dinero", "reinvierte_ganancias", "define_precios_costos"]) },
       { competencia: "Digital", valor: score(["dispositivo_internet", "usa_apps_digitales", "usa_pagos_digitales", "dificultad_tecnologia"]) },
       { competencia: "Comercial", valor: score(["promocion_negocio", "usa_sugerencias_clientes"]) },
-      { competencia: "Innovacion", valor: score(["etnia", "incorpora_cultura", "origen_conocimiento_cultural", "participa_asociaciones"]) },
-      { competencia: "Gestion", valor: score(["parroquia", "sector_ubicacion", "antiguedad_emprendimiento", "sector_economico", "nivel_instruccion", "situacion_formalizacion", "planifica_metas", "interes_programa", "modalidad_preferida"]) },
+      { competencia: "Innovación", valor: score(["etnia", "incorpora_cultura", "origen_conocimiento_cultural", "participa_asociaciones"]) },
+      { competencia: "Gestión", valor: score(["parroquia", "sector_ubicacion", "antiguedad_emprendimiento", "sector_economico", "nivel_instruccion", "situacion_formalizacion", "planifica_metas", "interes_programa", "modalidad_preferida"]) },
     ],
     diagnostico: {
       respuestas: total,
