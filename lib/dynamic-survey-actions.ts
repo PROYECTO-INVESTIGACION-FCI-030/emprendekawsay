@@ -58,6 +58,28 @@ export async function saveSurveyQuestion(formData: FormData) {
   return { ok: true, message: "Pregunta creada." }
 }
 
+export async function updateSurveyQuestion(formData: FormData) {
+  const ctx = await adminContext()
+  if (!ctx.allowed) return { ok: false, message: "No autorizado." }
+  const id = String(formData.get("id") ?? "")
+  const pregunta = String(formData.get("pregunta") ?? "").trim()
+  const tipo = String(formData.get("tipo") ?? "texto")
+  const orden = Number(formData.get("orden") ?? 1)
+  const opciones = String(formData.get("opciones") ?? "").split("\n").map((item) => item.trim()).filter(Boolean)
+  const source = String(formData.get("condicion_pregunta") ?? "")
+  const operator = String(formData.get("condicion_operador") ?? "igual")
+  const value = String(formData.get("condicion_valor") ?? "").trim()
+  const condition = source && value ? { pregunta_id: source, operador: operator, valor: value } : null
+  if (!id || !pregunta || !Number.isInteger(orden)) return { ok: false, message: "Completa pregunta y orden." }
+  const { error } = await ctx.supabase
+    .from("encuesta_preguntas")
+    .update({ pregunta, tipo, orden, requerido: formData.get("requerido") === "on", opciones: opciones.length ? { opciones } : null, visible_cuando: condition })
+    .eq("id", id)
+  if (error) return { ok: false, message: error.message }
+  revalidatePath("/diagnostico")
+  return { ok: true, message: "Pregunta actualizada." }
+}
+
 export async function deleteSurveyQuestion(id: string) {
   const ctx = await adminContext()
   if (!ctx.allowed) return { ok: false, message: "No autorizado." }

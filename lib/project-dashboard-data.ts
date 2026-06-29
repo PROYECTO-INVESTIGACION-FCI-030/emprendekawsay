@@ -22,7 +22,7 @@ export type ProjectDashboardData = {
     meta: number
     porcentaje: number
   }
-  tiempo: { fecha: string; planificado: number; ejecutado: number }[]
+  tiempo: { fecha: string; planificado: number; ejecutado: number; fuente?: string }[]
   produccionPorInvestigador: { investigador: string; planificado: number; ejecutado: number }[]
   necesidades: { necesidad: string; valor: number }[]
   competencias: { competencia: string; valor: number }[]
@@ -36,7 +36,7 @@ export type ProjectDashboardData = {
     etnias: { nombre: string; valor: number }[]
     modalidades: { nombre: string; valor: number }[]
   }
-  actividades: { titulo: string; fecha: string; estado: string; color: string }[]
+  actividades: { titulo: string; fecha: string; fechaOrden: string; estado: string; color: string; fuente: string }[]
 }
 
 export const fallbackProjectDashboardData: ProjectDashboardData = {
@@ -65,19 +65,19 @@ export const fallbackProjectDashboardData: ProjectDashboardData = {
   },
   validacion: {
     encuestadas: 973,
-    meta: 973,
+    meta: 60,
     porcentaje: 100,
   },
   tiempo: [
-    { fecha: "Jun 2026", planificado: 0, ejecutado: 0 },
-    { fecha: "Nov 2026", planificado: 10, ejecutado: 5 },
-    { fecha: "Dic 2026", planificado: 20, ejecutado: 12 },
-    { fecha: "Mar 2027", planificado: 25, ejecutado: 17 },
-    { fecha: "Jun 2027", planificado: 40, ejecutado: 28 },
-    { fecha: "Sep 2027", planificado: 52, ejecutado: 34 },
-    { fecha: "Oct 2027", planificado: 66, ejecutado: 45 },
-    { fecha: "Mar 2028", planificado: 82, ejecutado: 58 },
-    { fecha: "Jun 2028", planificado: 95, ejecutado: 66 },
+    { fecha: "Jun 2026", planificado: 0, ejecutado: 0, fuente: "Proyecto" },
+    { fecha: "Nov 2026", planificado: 10, ejecutado: 5, fuente: "Proyecto" },
+    { fecha: "Dic 2026", planificado: 20, ejecutado: 12, fuente: "Proyecto" },
+    { fecha: "Mar 2027", planificado: 25, ejecutado: 17, fuente: "Proyecto" },
+    { fecha: "Jun 2027", planificado: 40, ejecutado: 28, fuente: "Científica" },
+    { fecha: "Sep 2027", planificado: 52, ejecutado: 34, fuente: "Científica" },
+    { fecha: "Oct 2027", planificado: 66, ejecutado: 45, fuente: "Científica" },
+    { fecha: "Mar 2028", planificado: 82, ejecutado: 58, fuente: "Científica" },
+    { fecha: "Jun 2028", planificado: 95, ejecutado: 66, fuente: "Científica" },
   ],
   produccionPorInvestigador: [
     { investigador: "Raquel Vera", planificado: 5, ejecutado: 3 },
@@ -131,10 +131,10 @@ export const fallbackProjectDashboardData: ProjectDashboardData = {
     ],
   },
   actividades: [
-    { titulo: "Validación de insumos de encuesta", fecha: "15/06/2027", estado: "En proceso", color: "bg-emerald-500" },
-    { titulo: "Aplicación de encuesta de validación", fecha: "30/06/2027", estado: "Programado", color: "bg-blue-500" },
-    { titulo: "Análisis de resultados de validación", fecha: "15/06/2027", estado: "Programado", color: "bg-violet-500" },
-    { titulo: "Ajustes finales del programa", fecha: "01/06/2027", estado: "Programado", color: "bg-orange-500" },
-    { titulo: "Redacción de artículo científico", fecha: "07/06/2027", estado: "Programado", color: "bg-yellow-500" },
+    { titulo: "Validación de insumos de encuesta", fecha: "15/06/2027", fechaOrden: "2027-06-15", estado: "En proceso", color: "bg-emerald-500", fuente: "Proyecto" },
+    { titulo: "Aplicación de encuesta de validación", fecha: "30/06/2027", fechaOrden: "2027-06-30", estado: "Programado", color: "bg-blue-500", fuente: "Proyecto" },
+    { titulo: "Análisis de resultados de validación", fecha: "15/06/2027", fechaOrden: "2027-06-15", estado: "Programado", color: "bg-violet-500", fuente: "Proyecto" },
+    { titulo: "Ajustes finales del programa", fecha: "01/06/2027", fechaOrden: "2027-06-01", estado: "Programado", color: "bg-orange-500", fuente: "Proyecto" },
+    { titulo: "Redacción de artículo científico", fecha: "07/06/2027", fechaOrden: "2027-06-07", estado: "Programado", color: "bg-yellow-500", fuente: "Científica" },
   ],
 }

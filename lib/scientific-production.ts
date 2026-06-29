@@ -5,10 +5,11 @@ export type ScientificProduct = {
   id: string
   titulo: string
   descripcion: string | null
-  tipo: "articulo_scopus" | "articulo_latindex" | "ponencia" | "capitulo_libro" | "politica_publica"
+  tipo: "alto_impacto" | "regional"
   estado: "pendiente" | "en_redaccion" | "en_revision" | "publicado"
   evidencia_url: string | null
   fecha_objetivo: string | null
+  fecha_publicacion: string | null
   investigadores: Investigator[]
 }
 
@@ -27,7 +28,7 @@ export async function getScientificProducts(): Promise<ScientificProduct[]> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from("productos_cientificos")
-    .select("id, titulo, descripcion, tipo, estado, evidencia_url, enlace, fecha_objetivo")
+    .select("id, titulo, descripcion, tipo, estado, evidencia_url, enlace, fecha_objetivo, fecha_publicacion")
     .order("fecha_actualizacion", { ascending: false })
   if (error || !data) return []
 
@@ -49,10 +50,11 @@ export async function getScientificProducts(): Promise<ScientificProduct[]> {
     id: item.id,
     titulo: item.titulo,
     descripcion: item.descripcion,
-    tipo: item.tipo as ScientificProduct["tipo"],
+    tipo: item.tipo === "articulo_latindex" || item.tipo === "regional" ? "regional" : "alto_impacto",
     estado: item.estado as ScientificProduct["estado"],
     evidencia_url: item.evidencia_url || item.enlace,
     fecha_objetivo: item.fecha_objetivo ?? null,
+    fecha_publicacion: item.fecha_publicacion ?? null,
     investigadores: (assignments ?? [])
       .filter((assignment) => assignment.id_producto === item.id)
       .map((assignment) => profileMap.get(assignment.id_investigador))
@@ -62,12 +64,13 @@ export async function getScientificProducts(): Promise<ScientificProduct[]> {
 
 export async function getProductionDashboardData() {
   const products = await getScientificProducts()
-  const map = new Map<string, { investigador: string; planificado: number; ejecutado: number }>()
+  const map = new Map<string, { investigador: string; altoImpacto: number; regional: number; total: number }>()
   for (const product of products) {
     for (const investigator of product.investigadores) {
-      const current = map.get(investigator.id) ?? { investigador: investigator.nombre, planificado: 0, ejecutado: 0 }
-      current.planificado += 1
-      if (product.estado === "publicado") current.ejecutado += 1
+      const current = map.get(investigator.id) ?? { investigador: investigator.nombre, altoImpacto: 0, regional: 0, total: 0 }
+      current.total += 1
+      if (product.tipo === "alto_impacto") current.altoImpacto += 1
+      if (product.tipo === "regional") current.regional += 1
       map.set(investigator.id, current)
     }
   }

@@ -5,7 +5,7 @@ export const participantModules = {
     title: "Diagnostico",
     description: "Encuesta inicial de necesidades de formacion y capacitacion",
     action: "Iniciar encuesta",
-    actionHref: "/diagnostico",
+    actionHref: "/diagnostico/encuesta",
     icon: ClipboardList,
     progress: 0,
     steps: [

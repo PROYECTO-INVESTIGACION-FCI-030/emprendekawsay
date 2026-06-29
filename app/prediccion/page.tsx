@@ -3,6 +3,10 @@ import { AppShell } from "@/components/dashboard/app-shell"
 import { getCoursePredictions } from "@/lib/course-prediction"
 
 export default async function PrediccionPage() {
-  const predictions = await getCoursePredictions()
-  return <AppShell><AiCoursePredictor predictions={predictions} /></AppShell>
+  const { cursos, perfil } = await getCoursePredictions()
+  return (
+    <AppShell>
+      <AiCoursePredictor predictions={cursos} profile={perfil} />
+    </AppShell>
+  )
 }

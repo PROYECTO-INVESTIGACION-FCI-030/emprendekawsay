@@ -14,8 +14,8 @@ type Usuario = {
 export function ConfiguracionClientWrapper({
   usuarios,
   initialRol,
-  projectInfo,
   historialIngresos,
+  projectInfo,
 }: {
   usuarios: Usuario[]
   initialRol: string | null
@@ -28,6 +28,7 @@ export function ConfiguracionClientWrapper({
     rol_usuario: string | null
     fecha_ingreso: string
     ruta: string | null
+    pagina_nombre?: string
     user_agent: string | null
   }>
 }) {

@@ -1,4 +1,5 @@
-import { fallbackProjectDashboardData, type ProjectDashboardData } from "@/lib/project-dashboard-data"
+﻿import { fallbackProjectDashboardData, type ProjectDashboardData } from "@/lib/project-dashboard-data"
+import { getActividadesProyecto } from "@/lib/actividades-proyecto"
 import { getCursos, type Curso } from "@/lib/cursos"
 import { getProjectInfo } from "@/lib/project-info"
 import { getProductionDashboardData } from "@/lib/scientific-production"
@@ -50,7 +51,7 @@ function calculateCourseStats(cursos: Curso[]): ProjectDashboardData["cursos"] {
     borrador: cursos.filter((curso) => curso.estado === "borrador").length,
   }
   const total = cursos.length
-  const percentage = (value: number) => total ? Math.round((value / total) * 100) : 0
+  const percentage = (value: number) => (total ? Math.round((value / total) * 100) : 0)
 
   return {
     disenados: total,
@@ -91,6 +92,12 @@ function percent(count: number, total: number) {
   return Math.round((count / total) * 100)
 }
 
+function parseDateOnly(value: string) {
+  const [year, month, day] = value.split("-").map(Number)
+  if (!year || !month || !day) return null
+  return new Date(year, month - 1, day)
+}
+
 function answerScore(key: keyof DashboardRow, value: string | null | undefined): number | null {
   const normalized = normalize(value)
   if (!normalized) return null
@@ -111,7 +118,7 @@ function answerScore(key: keyof DashboardRow, value: string | null | undefined):
   }
   if (key === "dificultad_tecnologia") {
     if (includesAny(value, ["ninguna", "no he tenido", "sin dificultad"])) return 100
-    if (includesAny(value, ["a veces", "poca" ])) return 50
+    if (includesAny(value, ["a veces", "poca"])) return 50
     return 20
   }
   if (key === "origen_conocimiento_cultural") {
@@ -142,7 +149,6 @@ function needsSupport(value: string | null | undefined) {
 
 function topItems(rows: DashboardRow[], key: keyof DashboardRow, limit = 5) {
   const counts = new Map<string, number>()
-
   for (const row of rows) {
     const raw = row[key]
     if (typeof raw !== "string") continue
@@ -189,16 +195,10 @@ function calculateDashboard(rows: DashboardRow[]): ProjectDashboardData {
       needsSupport(row.participa_capacitaciones),
   ).length
 
-  const formalizadas = rows.filter(
-    (row) => !needsSupport(firstValue(row, ["situacion_formalizacion", "tiene_ruc_permisos"])),
-  ).length
-
+  const formalizadas = rows.filter((row) => !needsSupport(firstValue(row, ["situacion_formalizacion", "tiene_ruc_permisos"])) ).length
   const interes = rows.filter((row) => includesAny(row.interes_programa, ["si", "a veces"])).length
   const brechaDigital = rows.filter(
-    (row) =>
-      needsSupport(row.dispositivo_internet) ||
-      needsSupport(row.usa_apps_digitales) ||
-      needsSupport(row.dificultad_tecnologia),
+    (row) => needsSupport(row.dispositivo_internet) || needsSupport(row.usa_apps_digitales) || needsSupport(row.dificultad_tecnologia),
   ).length
 
   const score = (keys: (keyof DashboardRow)[]) => {
@@ -241,6 +241,94 @@ function calculateDashboard(rows: DashboardRow[]): ProjectDashboardData {
   }
 }
 
+function calculateTimelineProgress(activities: Array<{ fecha: string; estado: string }>) {
+  const ordered = [...activities].sort((a, b) => {
+    const aDate = parseDateOnly(a.fecha)?.getTime() ?? Number.POSITIVE_INFINITY
+    const bDate = parseDateOnly(b.fecha)?.getTime() ?? Number.POSITIVE_INFINITY
+    return aDate - bDate
+  })
+
+  const total = ordered.length
+  const completed = ordered.filter((activity) => ["publicado", "completado"].includes(activity.estado)).length
+  const progress = total ? Math.round((completed / total) * 100) : 0
+
+  const grouped = new Map<string, { fecha: string; planned: number; executed: number }>()
+  for (const activity of ordered) {
+    const parsedDate = parseDateOnly(activity.fecha)
+    const key = parsedDate ? parsedDate.toISOString().slice(0, 10) : activity.fecha
+    const current = grouped.get(key) ?? {
+      fecha: parsedDate ? parsedDate.toLocaleDateString("es-EC", { month: "short", year: "numeric" }) : activity.fecha,
+      planned: 0,
+      executed: 0,
+    }
+    current.planned += 1
+    if (["publicado", "completado"].includes(activity.estado)) current.executed += 1
+    grouped.set(key, current)
+  }
+
+  let runningPlanned = 0
+  let runningExecuted = 0
+  const timeline = [...grouped.entries()]
+    .sort(([a], [b]) => {
+      const aDate = parseDateOnly(a)?.getTime() ?? Number.POSITIVE_INFINITY
+      const bDate = parseDateOnly(b)?.getTime() ?? Number.POSITIVE_INFINITY
+      return aDate - bDate
+    })
+    .map(([, value]) => {
+      runningPlanned += value.planned
+      runningExecuted += value.executed
+      return {
+        fecha: value.fecha,
+        planificado: Math.round((runningPlanned / total) * 100),
+        ejecutado: Math.round((runningExecuted / total) * 100),
+      }
+    })
+
+  return {
+    avance: progress,
+    tiempo: timeline.length ? timeline : [{ fecha: "Sin datos", planificado: 0, ejecutado: 0 }],
+  }
+}
+
+function formatProyectoActivityDate(value: string | null | undefined) {
+  if (!value) return "Sin fecha"
+  const date = parseDateOnly(value) ?? new Date(value)
+  if (Number.isNaN(date.getTime())) return "Sin fecha"
+  return date.toLocaleDateString("es-EC", { day: "2-digit", month: "2-digit", year: "numeric" })
+}
+
+function formatActivityDate(value: string | null | undefined) {
+  if (!value) return "Sin fecha"
+  const date = parseDateOnly(value) ?? new Date(value)
+  if (Number.isNaN(date.getTime())) return "Sin fecha"
+  return date.toLocaleDateString("es-EC")
+}
+
+function formatPublishedDate(value: string | null | undefined) {
+  if (!value) return "Sin fecha"
+  const date = parseDateOnly(value) ?? new Date(value)
+  if (Number.isNaN(date.getTime())) return "Sin fecha"
+  return date.toLocaleDateString("es-EC")
+}
+
+function toSortableDate(value: string | null | undefined) {
+  if (!value) return ""
+  const date = parseDateOnly(value) ?? new Date(value)
+  if (Number.isNaN(date.getTime())) return ""
+  return date.toISOString().slice(0, 10)
+}
+
+function toSortableIso(value: string | null | undefined) {
+  if (!value) return ""
+  const date = parseDateOnly(value) ?? new Date(value)
+  if (Number.isNaN(date.getTime())) return ""
+  return date.toISOString().slice(0, 10)
+}
+
+function formatPeriodo(inicio: string, fin: string) {
+  return `${inicio} - ${fin}`
+}
+
 async function getCsvRows() {
   const supabase = await createClient()
   const { data, error } = await supabase
@@ -256,36 +344,117 @@ async function getCsvRows() {
 
 async function getCsvCount() {
   const supabase = await createClient()
-  const { count } = await supabase
-    .from("cuestionario_limpio_respuestas")
-    .select("id", { count: "exact", head: true })
+  const { count } = await supabase.from("cuestionario_limpio_respuestas").select("id", { count: "exact", head: true })
   return count ?? 0
 }
 
+function getProductionActivities(products: Awaited<ReturnType<typeof getProductionDashboardData>>["productos"]) {
+  return [...products]
+    .filter((product) => Boolean(product.fecha_objetivo) && product.estado !== "publicado")
+    .sort((a, b) => {
+      const aDateValue = a.estado === "publicado" ? a.fecha_publicacion ?? a.fecha_objetivo : a.fecha_objetivo
+      const bDateValue = b.estado === "publicado" ? b.fecha_publicacion ?? b.fecha_objetivo : b.fecha_objetivo
+      const aDate = aDateValue ? new Date(aDateValue).getTime() : Number.POSITIVE_INFINITY
+      const bDate = bDateValue ? new Date(bDateValue).getTime() : Number.POSITIVE_INFINITY
+      return aDate - bDate
+    })
+    .map((product) => ({
+      titulo: product.titulo,
+      fecha: product.estado === "publicado" ? formatPublishedDate(product.fecha_publicacion) : formatActivityDate(product.fecha_objetivo),
+      fechaOrden: product.estado === "publicado" ? toSortableIso(product.fecha_publicacion) : toSortableDate(product.fecha_objetivo),
+      estado:
+        product.estado === "publicado"
+          ? "Publicado"
+          : product.estado === "en_proceso" ||
+              product.estado === "en_revision" ||
+              product.estado === "en_redaccion"
+            ? "En proceso"
+            : "Programado",
+      color:
+        product.estado === "publicado"
+          ? "bg-emerald-500"
+          : product.estado === "en_proceso" ||
+              product.estado === "en_revision" ||
+              product.estado === "en_redaccion"
+            ? "bg-amber-500"
+            : "bg-blue-500",
+      fuente: "Científica",
+    }))
+}
+
+function getScientificTimelineActivities(products: Awaited<ReturnType<typeof getProductionDashboardData>>["productos"]) {
+  const activities: Array<{ fecha: string; estado: string }> = []
+
+  for (const product of products) {
+    if (product.fecha_objetivo) {
+      activities.push({
+        fecha: product.fecha_objetivo,
+        estado: product.estado === "publicado" ? "publicado" : product.estado,
+      })
+    }
+
+    if (product.estado === "publicado" && product.fecha_publicacion) {
+      activities.push({
+        fecha: product.fecha_publicacion,
+        estado: "publicado",
+      })
+    }
+  }
+
+  return activities
+}
+
 export async function getProjectDashboardData(): Promise<ProjectDashboardData> {
-  const [csvRows, csvCount, projectInfo, cursos, production] = await Promise.all([
+  const [csvRows, csvCount, projectInfo, cursos, production, actividadesProyecto] = await Promise.all([
     getCsvRows(),
     getCsvCount(),
     getProjectInfo(),
     getCursos(true),
     getProductionDashboardData(),
+    getActividadesProyecto(),
   ])
   const rows = csvRows
   const courseStats = calculateCourseStats(cursos)
+  const projectActivities = actividadesProyecto
+    .filter((actividad) => actividad.estado !== "completado" && actividad.estado !== "cancelado")
+    .map((actividad) => ({
+      titulo: actividad.titulo,
+      fecha: formatProyectoActivityDate(actividad.fecha_objetivo),
+      fechaOrden: toSortableDate(actividad.fecha_objetivo),
+      estado: actividad.estado === "en_proceso" ? "En proceso" : "Programado",
+      color: actividad.estado === "en_proceso" ? "bg-amber-500" : "bg-blue-500",
+      fuente: "Proyecto",
+    }))
+  const scientificRawActivities = getScientificTimelineActivities(production.productos ?? [])
+  const scientificActivities = getProductionActivities(production.productos ?? [])
+  const upcomingActivities = [...projectActivities, ...scientificActivities]
+    .filter((activity) => activity.estado !== "Publicado")
+    .sort((a, b) => a.fechaOrden.localeCompare(b.fechaOrden))
+  const progressTimeline = calculateTimelineProgress([
+    ...projectActivities.map((activity) => ({
+      fecha: activity.fechaOrden,
+      estado: activity.estado === "En proceso" ? "en_proceso" : "programado",
+    })),
+    ...scientificRawActivities,
+  ])
 
   if (rows.length === 0) {
     return {
       ...fallbackProjectDashboardData,
+      periodo: formatPeriodo(projectInfo.fechaInicio, projectInfo.fechaFin),
       cursos: courseStats,
       produccion: production.resumen,
       produccionPorInvestigador: production.investigadores,
+      tiempo: progressTimeline.tiempo,
+      actividades: upcomingActivities.slice(0, 5),
       validacion: {
         encuestadas: csvCount,
-        meta: csvCount,
-        porcentaje: csvCount ? 100 : 0,
+        meta: projectInfo.metaValidacion,
+        porcentaje: projectInfo.metaValidacion ? Math.min(100, Math.round((csvCount / projectInfo.metaValidacion) * 100)) : 0,
       },
       proyecto: {
         ...fallbackProjectDashboardData.proyecto,
+        avance: progressTimeline.avance,
         inicio: projectInfo.fechaInicio,
         fin: projectInfo.fechaFin,
         tiempoTranscurrido: projectInfo.porcentajeTranscurrido,
@@ -296,31 +465,20 @@ export async function getProjectDashboardData(): Promise<ProjectDashboardData> {
   const dashboard = calculateDashboard(rows)
   return {
     ...dashboard,
+    periodo: formatPeriodo(projectInfo.fechaInicio, projectInfo.fechaFin),
     cursos: courseStats,
     produccion: production.resumen,
     produccionPorInvestigador: production.investigadores,
-    actividades: [
-      ...((production.productos ?? []).map((product: {
-        titulo: string
-        fecha_objetivo: string | null
-        estado: string
-      }) => ({
-        titulo: product.titulo,
-        fecha: product.fecha_objetivo
-          ? new Date(`${product.fecha_objetivo}T00:00:00`).toLocaleDateString("es-EC")
-          : "Sin fecha",
-        estado: product.estado === "publicado" ? "Publicado" : "Programado",
-        color: product.estado === "publicado" ? "bg-emerald-500" : "bg-blue-500",
-      }))),
-      ...dashboard.actividades,
-    ].slice(0, 8),
+    tiempo: progressTimeline.tiempo,
+    actividades: upcomingActivities.slice(0, 8),
     validacion: {
       encuestadas: csvCount,
-      meta: csvCount,
-      porcentaje: csvCount ? 100 : 0,
+      meta: projectInfo.metaValidacion,
+      porcentaje: projectInfo.metaValidacion ? Math.min(100, Math.round((csvCount / projectInfo.metaValidacion) * 100)) : 0,
     },
     proyecto: {
       ...dashboard.proyecto,
+      avance: progressTimeline.avance,
       inicio: projectInfo.fechaInicio,
       fin: projectInfo.fechaFin,
       tiempoTranscurrido: projectInfo.porcentajeTranscurrido,

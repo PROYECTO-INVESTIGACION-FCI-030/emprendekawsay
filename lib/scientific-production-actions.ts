@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { obtenerRolUsuario } from "@/lib/roles"
 import { createClient } from "@/lib/supabase/server"
 
-const TYPES = ["articulo_scopus", "articulo_latindex", "ponencia", "capitulo_libro", "politica_publica"]
+const TYPES = ["alto_impacto", "regional"]
 const STATES = ["pendiente", "en_redaccion", "en_revision", "publicado"]
 const ROLES_PRODUCCION = ["administradora", "investigadora", "formadora", "institucion_aliada"]
 
@@ -28,11 +28,15 @@ export async function saveScientificProduct(formData: FormData) {
   const estado = String(formData.get("estado") ?? "")
   const evidencia = String(formData.get("evidencia_url") ?? "").trim() || null
   const fechaObjetivo = String(formData.get("fecha_objetivo") ?? "").trim() || null
+  const fechaPublicacionInput = String(formData.get("fecha_publicacion") ?? "").trim() || null
   const investigadores = formData.getAll("investigadores").map(String).filter(Boolean)
   const responsablePrincipal = investigadores[0] || null
 
   if (!titulo || !TYPES.includes(tipo) || !STATES.includes(estado)) {
     return { ok: false, message: "Completa título, tipo y estado." }
+  }
+  if (!fechaObjetivo) {
+    return { ok: false, message: "Agrega una fecha objetivo para que aparezca en Próximas Actividades." }
   }
   if (evidencia) {
     try {
@@ -43,16 +47,24 @@ export async function saveScientificProduct(formData: FormData) {
   }
 
   const progress = { pendiente: 0, en_redaccion: 35, en_revision: 70, publicado: 100 }[estado] ?? 0
+  const tipoDb = tipo === "regional" ? "articulo_latindex" : "articulo_scopus"
+  const { data: existingProduct } = id
+    ? await ctx.supabase.from("productos_cientificos").select("fecha_publicacion").eq("id", id).maybeSingle()
+    : { data: null }
+  const fechaPublicacion = estado === "publicado"
+    ? (fechaPublicacionInput || existingProduct?.fecha_publicacion || new Date().toISOString())
+    : null
   const payload = {
     titulo,
     descripcion: descripcion || null,
-    tipo,
+    tipo: tipoDb,
     estado,
     avance: progress,
     responsable: responsablePrincipal,
     evidencia_url: evidencia,
     enlace: evidencia,
     fecha_objetivo: fechaObjetivo,
+    fecha_publicacion: fechaPublicacion,
     fecha_actualizacion: new Date().toISOString(),
   }
 

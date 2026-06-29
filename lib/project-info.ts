@@ -5,6 +5,7 @@ export type ProjectInfo = {
   descripcion: string
   fechaInicioInput: string
   fechaFinInput: string
+  metaValidacion: number
   fechaInicio: string
   fechaFin: string
   duracionMeses: number
@@ -17,6 +18,7 @@ export const fallbackProjectInfo: ProjectInfo = {
   descripcion: "Programa de formación y apoyo técnico para el emprendimiento de mujeres indígenas residentes en Guayaquil",
   fechaInicioInput: "2026-06-01",
   fechaFinInput: "2028-06-30",
+  metaValidacion: 60,
   fechaInicio: "01/06/2026",
   fechaFin: "30/06/2028",
   duracionMeses: 24,
@@ -40,7 +42,7 @@ export async function getProjectInfo(): Promise<ProjectInfo> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from("configuracion_proyecto")
-    .select("nombre, descripcion, fecha_inicio, fecha_fin")
+    .select("nombre, descripcion, fecha_inicio, fecha_fin, meta_validacion")
     .eq("id", 1)
     .maybeSingle()
 
@@ -60,6 +62,7 @@ export async function getProjectInfo(): Promise<ProjectInfo> {
     descripcion: data.descripcion ?? fallbackProjectInfo.descripcion,
     fechaInicioInput: data.fecha_inicio,
     fechaFinInput: data.fecha_fin,
+    metaValidacion: Number.isFinite(Number(data.meta_validacion)) ? Number(data.meta_validacion) : fallbackProjectInfo.metaValidacion,
     fechaInicio: formatDate(data.fecha_inicio),
     fechaFin: formatDate(data.fecha_fin),
     duracionMeses,

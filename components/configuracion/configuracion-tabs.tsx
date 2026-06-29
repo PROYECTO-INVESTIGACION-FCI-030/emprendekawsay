@@ -2,43 +2,15 @@
 
 import { useActionState, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import {
-  Users,
-  ShieldCheck,
-  Gauge,
-  CalendarRange,
-  FolderKanban,
-  Plus,
-  Search,
-  Check,
-  X,
-  Pencil,
-  Trash2,
-  Loader2,
-} from "lucide-react"
+import { Check, FolderKanban, Loader2, Pencil, Plus, Search, Trash2, Users } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Switch } from "@/components/ui/switch"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 import type { ProjectInfo } from "@/lib/project-info"
 import { actualizarConfiguracionProyecto } from "@/lib/project-config-actions"
@@ -47,19 +19,16 @@ import { crearUsuario, actualizarUsuario, eliminarUsuario } from "@/lib/usuarios
 const SECCIONES = [
   { value: "proyecto", label: "Proyecto", icon: FolderKanban },
   { value: "usuarios", label: "Gestión de usuarios", icon: Users },
-  { value: "roles", label: "Roles y permisos", icon: ShieldCheck },
-  { value: "indicadores", label: "Parámetros de indicadores", icon: Gauge },
-  { value: "periodos", label: "Periodos de evaluación", icon: CalendarRange },
   { value: "historial", label: "Historial de ingresos", icon: Check },
 ] as const
 
-export function ConfiguracionTabs({ 
-  usuarios = [], 
+export function ConfiguracionTabs({
+  usuarios = [],
   esAdmin = false,
   projectInfo,
   historialIngresos = [],
-}: { 
-  usuarios?: Array<{ id: string; nombre_completo: string | null; email: string | null; rol: string; activa: boolean }> 
+}: {
+  usuarios?: Array<{ id: string; nombre_completo: string | null; email: string | null; rol: string; activa: boolean }>
   esAdmin?: boolean
   projectInfo: ProjectInfo
   historialIngresos?: Array<{
@@ -94,17 +63,8 @@ export function ConfiguracionTabs({
       <TabsContent value="usuarios">
         <GestionUsuarios usuarios={usuarios} esAdmin={esAdmin} />
       </TabsContent>
-      <TabsContent value="roles">
-        <RolesPermisos />
-      </TabsContent>
-      <TabsContent value="periodos">
-        <PeriodosEvaluacion />
-      </TabsContent>
       <TabsContent value="historial">
         <HistorialIngresos historialIngresos={historialIngresos} />
-      </TabsContent>
-      <TabsContent value="indicadores">
-        <ParametrosIndicadores />
       </TabsContent>
     </Tabs>
   )
@@ -113,12 +73,10 @@ export function ConfiguracionTabs({
 function Panel({
   title,
   description,
-  action,
   children,
 }: {
   title: string
   description: string
-  action?: React.ReactNode
   children: React.ReactNode
 }) {
   return (
@@ -128,7 +86,6 @@ function Panel({
           <h3 className="text-base font-semibold text-foreground">{title}</h3>
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
-        {action}
       </header>
       <div className="p-6">{children}</div>
     </section>
@@ -142,6 +99,7 @@ function ConfiguracionProyecto({ projectInfo, esAdmin }: { projectInfo: ProjectI
   const [descripcionProyecto, setDescripcionProyecto] = useState(projectInfo.descripcion)
   const [fechaInicio, setFechaInicio] = useState(projectInfo.fechaInicioInput)
   const [fechaFin, setFechaFin] = useState(projectInfo.fechaFinInput)
+  const [metaValidacion, setMetaValidacion] = useState(String(projectInfo.metaValidacion))
 
   useEffect(() => {
     if (!state?.ok) return
@@ -158,8 +116,8 @@ function ConfiguracionProyecto({ projectInfo, esAdmin }: { projectInfo: ProjectI
 
   return (
     <Panel
-      title="Configuracion del proyecto"
-      description="Edita la informacion que se muestra en el dashboard y en la tarjeta lateral del proyecto"
+      title="Configuración del proyecto"
+      description="Edita la información que se muestra en el header, la tarjeta lateral y la validación."
     >
       <form action={formAction} className="space-y-5">
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -171,22 +129,18 @@ function ConfiguracionProyecto({ projectInfo, esAdmin }: { projectInfo: ProjectI
               value={nombreProyecto}
               onChange={(event) => setNombreProyecto(event.target.value)}
               disabled={!esAdmin || pending}
-              placeholder="Proyecto FCI 2025"
             />
           </div>
-
           <div className="space-y-1.5 lg:col-span-2">
-            <Label htmlFor="project-description">Descripcion</Label>
+            <Label htmlFor="project-description">Descripción</Label>
             <Input
               id="project-description"
               name="descripcion"
               value={descripcionProyecto}
               onChange={(event) => setDescripcionProyecto(event.target.value)}
               disabled={!esAdmin || pending}
-              placeholder="Programa de formacion y apoyo tecnico..."
             />
           </div>
-
           <div className="space-y-1.5">
             <Label htmlFor="project-start">Fecha de inicio</Label>
             <Input
@@ -198,7 +152,6 @@ function ConfiguracionProyecto({ projectInfo, esAdmin }: { projectInfo: ProjectI
               disabled={!esAdmin || pending}
             />
           </div>
-
           <div className="space-y-1.5">
             <Label htmlFor="project-end">Fecha de fin</Label>
             <Input
@@ -207,6 +160,18 @@ function ConfiguracionProyecto({ projectInfo, esAdmin }: { projectInfo: ProjectI
               type="date"
               value={fechaFin}
               onChange={(event) => setFechaFin(event.target.value)}
+              disabled={!esAdmin || pending}
+            />
+          </div>
+          <div className="space-y-1.5 lg:col-span-2">
+            <Label htmlFor="project-meta">Meta de participantes</Label>
+            <Input
+              id="project-meta"
+              name="meta_validacion"
+              type="number"
+              min="1"
+              value={metaValidacion}
+              onChange={(event) => setMetaValidacion(event.target.value)}
               disabled={!esAdmin || pending}
             />
           </div>
@@ -220,14 +185,10 @@ function ConfiguracionProyecto({ projectInfo, esAdmin }: { projectInfo: ProjectI
             </span>
           </div>
           <Progress value={projectInfo.porcentajeTranscurrido} />
-          <p className="mt-2 text-right text-xs text-muted-foreground">
-            {projectInfo.porcentajeTranscurrido}% transcurrido
-          </p>
+          <p className="mt-2 text-right text-xs text-muted-foreground">{projectInfo.porcentajeTranscurrido}% transcurrido</p>
         </div>
 
-        {!esAdmin ? (
-          <p className="text-sm text-muted-foreground">Solo la administradora puede editar esta informacion.</p>
-        ) : null}
+        {!esAdmin ? <p className="text-sm text-muted-foreground">Solo la administradora puede editar esta información.</p> : null}
 
         {state?.message ? (
           <p className={cn("text-sm", state.ok ? "text-primary" : "text-destructive")}>{state.message}</p>
@@ -236,21 +197,12 @@ function ConfiguracionProyecto({ projectInfo, esAdmin }: { projectInfo: ProjectI
         <div className="flex justify-end">
           <Button type="submit" disabled={!esAdmin || pending}>
             {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Guardar configuracion
+            Guardar configuración
           </Button>
         </div>
       </form>
     </Panel>
   )
-}
-
-const ROL_BADGE: Record<string, string> = {
-  Administradora: "bg-primary/10 text-primary",
-  Investigadora: "bg-chart-4/15 text-chart-4",
-  Formadora: "bg-chart-3/15 text-chart-3",
-  "Mujer emprendedora": "bg-secondary text-secondary-foreground",
-  "Institución aliada": "bg-chart-2/15 text-chart-2",
-  "Sin rol": "bg-secondary text-secondary-foreground",
 }
 
 function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; nombre_completo: string | null; email: string | null; rol: string; activa: boolean }>; esAdmin: boolean }) {
@@ -283,7 +235,7 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
       setNewEmail("")
       setNewNombre("")
       setNewRol("investigadora")
-      window.location.reload() // Refrescar lista
+      window.location.reload()
     } else {
       alert(`Error: ${res.message}`)
     }
@@ -301,7 +253,7 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
     setLoading(false)
     if (res.ok) {
       setOpenEdit(false)
-      window.location.reload() // Refrescar lista
+      window.location.reload()
     } else {
       alert(`Error: ${res.message}`)
     }
@@ -312,11 +264,8 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
     setLoading(true)
     const res = await eliminarUsuario(userId)
     setLoading(false)
-    if (res.ok) {
-      window.location.reload()
-    } else {
-      alert(`Error: ${res.message}`)
-    }
+    if (res.ok) window.location.reload()
+    else alert(`Error: ${res.message}`)
   }
 
   function openEditDialog(user: typeof usuarios[0]) {
@@ -330,10 +279,7 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
 
   if (!esAdmin) {
     return (
-      <Panel
-        title="Gestión de usuarios"
-        description="Solo los administradores pueden gestionar usuarios"
-      >
+      <Panel title="Gestión de usuarios" description="Solo la administradora puede gestionar usuarios.">
         <p className="text-muted-foreground">No tienes permiso para gestionar usuarios.</p>
       </Panel>
     )
@@ -343,22 +289,11 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
     <>
       <Panel
         title="Gestión de usuarios"
-        description="Administra las personas con acceso a la plataforma"
-        action={
-          <Button size="sm" onClick={() => setOpenCreate(true)}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            Nuevo usuario
-          </Button>
-        }
+        description="Administra a las personas con acceso a la plataforma."
       >
         <div className="relative mb-4 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por nombre o correo…"
-            className="pl-9"
-          />
+          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por nombre o correo..." className="pl-9" />
         </div>
         <div className="overflow-x-auto rounded-md border border-border">
           <Table>
@@ -376,105 +311,43 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
                 <TableRow key={u.id}>
                   <TableCell className="font-medium text-foreground">{u.nombre_completo ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{u.email ?? "—"}</TableCell>
+                  <TableCell>{u.rol}</TableCell>
                   <TableCell>
-                    <span
-                      className={cn(
-                        "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                        ROL_BADGE[u.rol] ?? "bg-secondary text-secondary-foreground",
-                      )}
-                    >
-                      {u.rol}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={u.activa ? "default" : "secondary"}>
-                      {u.activa ? "Activa" : "Inactiva"}
-                    </Badge>
+                    <Badge variant={u.activa ? "default" : "secondary"}>{u.activa ? "Activa" : "Inactiva"}</Badge>
                   </TableCell>
                   <TableCell className="flex justify-end gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => openEditDialog(u)}
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => openEditDialog(u)}>
                       <Pencil className="h-4 w-4" />
-                      <span className="sr-only">Editar {u.nombre_completo}</span>
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleDeleteUser(u.id)}
-                      className="text-destructive hover:bg-destructive/10"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(u.id)} className="text-destructive hover:bg-destructive/10">
                       <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">Eliminar {u.nombre_completo}</span>
                     </Button>
                   </TableCell>
                 </TableRow>
               ))}
-              {filtrados.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
-                    No se encontraron usuarios.
-                  </TableCell>
-                </TableRow>
-              )}
             </TableBody>
           </Table>
         </div>
       </Panel>
 
-      {/* Dialog para crear usuario */}
       <Dialog open={openCreate} onOpenChange={setOpenCreate}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Crear nuevo usuario</DialogTitle>
-            <DialogDescription>Ingresa los datos del nuevo usuario. Se enviará un correo con instrucciones para establecer contraseña.</DialogDescription>
+            <DialogDescription>Ingresa los datos del nuevo usuario.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-900">
-              <p className="font-medium">¿Cómo funciona?</p>
-              <p className="mt-1 text-xs">Se enviará un correo al nuevo usuario con un enlace para establecer su propia contraseña de forma segura.</p>
-            </div>
             <div>
               <Label htmlFor="new-nombre">Nombre completo</Label>
-              <Input
-                id="new-nombre"
-                value={newNombre}
-                onChange={(e) => setNewNombre(e.target.value)}
-                placeholder="María García"
-              />
+              <Input id="new-nombre" value={newNombre} onChange={(e) => setNewNombre(e.target.value)} />
             </div>
             <div>
               <Label htmlFor="new-email">Correo</Label>
-              <Input
-                id="new-email"
-                type="email"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                placeholder="maria@ejemplo.com"
-              />
-            </div>
-            <div>
-              <Label htmlFor="new-rol">Rol</Label>
-              <select
-                id="new-rol"
-                value={newRol}
-                onChange={(e) => setNewRol(e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="investigadora">Investigadora</option>
-                <option value="administradora">Administradora</option>
-                <option value="formadora">Formadora</option>
-                <option value="mujer_emprendedora">Mujer emprendedora</option>
-                <option value="institucion_aliada">Institución aliada</option>
-              </select>
+              <Input id="new-email" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenCreate(false)}>
-              Cancelar
-            </Button>
+            <Button variant="outline" onClick={() => setOpenCreate(false)}>Cancelar</Button>
             <Button onClick={handleCreateUser} disabled={loading || !newNombre || !newEmail}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Crear usuario
@@ -483,7 +356,6 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
         </DialogContent>
       </Dialog>
 
-      {/* Dialog para editar usuario */}
       <Dialog open={openEdit} onOpenChange={setOpenEdit}>
         <DialogContent>
           <DialogHeader>
@@ -493,49 +365,15 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
           <div className="space-y-4">
             <div>
               <Label htmlFor="edit-nombre">Nombre completo</Label>
-              <Input
-                id="edit-nombre"
-                value={editNombre}
-                onChange={(e) => setEditNombre(e.target.value)}
-              />
+              <Input id="edit-nombre" value={editNombre} onChange={(e) => setEditNombre(e.target.value)} />
             </div>
             <div>
               <Label htmlFor="edit-email">Correo</Label>
-              <Input
-                id="edit-email"
-                type="email"
-                value={editEmail}
-                onChange={(e) => setEditEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="edit-rol">Rol</Label>
-              <select
-                id="edit-rol"
-                value={editRol}
-                onChange={(e) => setEditRol(e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="Investigadora">Investigadora</option>
-                <option value="Administradora">Administradora</option>
-                <option value="Formadora">Formadora</option>
-                <option value="Mujer emprendedora">Mujer emprendedora</option>
-                <option value="Institución aliada">Institución aliada</option>
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                id="edit-activa"
-                checked={editActiva}
-                onCheckedChange={setEditActiva}
-              />
-              <Label htmlFor="edit-activa">Cuenta activa</Label>
+              <Input id="edit-email" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenEdit(false)}>
-              Cancelar
-            </Button>
+            <Button variant="outline" onClick={() => setOpenEdit(false)}>Cancelar</Button>
             <Button onClick={handleUpdateUser} disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Guardar cambios
@@ -547,71 +385,7 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
   )
 }
 
-const PERMISOS = ["Ver dashboard", "Editar proyecto", "Gestionar usuarios", "Generar reportes", "Configurar indicadores"]
-const MATRIZ: Record<string, boolean[]> = {
-  Administradora: [true, true, true, true, true],
-  Investigadora: [true, true, false, true, true],
-  Formadora: [true, true, false, true, false],
-  "Mujer emprendedora": [true, false, false, false, false],
-  "Institución aliada": [true, false, false, true, false],
-}
-
-function RolesPermisos() {
-  return (
-    <Panel
-      title="Roles y permisos"
-      description="Define qué puede hacer cada rol dentro del sistema"
-      action={
-        <Button size="sm" variant="outline">
-          <Plus className="mr-1.5 h-4 w-4" />
-          Nuevo rol
-        </Button>
-      }
-    >
-      <div className="overflow-x-auto rounded-md border border-border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Rol</TableHead>
-              {PERMISOS.map((p) => (
-                <TableHead key={p} className="text-center">
-                  {p}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Object.entries(MATRIZ).map(([rol, permisos]) => (
-              <TableRow key={rol}>
-                <TableCell className="font-medium text-foreground">{rol}</TableCell>
-                {permisos.map((permitido, i) => (
-                  <TableCell key={i} className="text-center">
-                    {permitido ? (
-                      <Check className="mx-auto h-4 w-4 text-primary" />
-                    ) : (
-                      <X className="mx-auto h-4 w-4 text-muted-foreground/40" />
-                    )}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </Panel>
-  )
-}
-
-function HistorialIngresos({ historialIngresos }: { historialIngresos: Array<{
-  id: string
-  id_usuario: string
-  nombre_usuario: string | null
-  email_usuario: string | null
-  rol_usuario: string | null
-  fecha_ingreso: string
-  ruta: string | null
-  user_agent: string | null
-}> }) {
+function HistorialIngresos({ historialIngresos }: { historialIngresos: Array<{ id: string; id_usuario: string; nombre_usuario: string | null; email_usuario: string | null; rol_usuario: string | null; fecha_ingreso: string; ruta: string | null; user_agent: string | null }> }) {
   return (
     <Panel title="Historial de ingresos" description="Últimos accesos registrados al iniciar sesión">
       <div className="overflow-x-auto rounded-md border border-border">
@@ -622,121 +396,15 @@ function HistorialIngresos({ historialIngresos }: { historialIngresos: Array<{
               <TableHead>Correo</TableHead>
               <TableHead>Rol</TableHead>
               <TableHead>Fecha</TableHead>
-              <TableHead>Ruta</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {historialIngresos.map((item) => (
               <TableRow key={item.id}>
-                <TableCell className="font-medium">{item.nombre_usuario ?? "—"}</TableCell>
+                <TableCell>{item.nombre_usuario ?? "—"}</TableCell>
                 <TableCell>{item.email_usuario ?? "—"}</TableCell>
                 <TableCell>{item.rol_usuario ?? "—"}</TableCell>
                 <TableCell>{new Date(item.fecha_ingreso).toLocaleString("es-EC")}</TableCell>
-                <TableCell>{item.ruta ?? "—"}</TableCell>
-              </TableRow>
-            ))}
-            {historialIngresos.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
-                  Aún no hay ingresos registrados.
-                </TableCell>
-              </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
-      </div>
-    </Panel>
-  )
-}
-
-const INDICADORES = [
-  { nombre: "Asistencia a cursos", meta: 80, unidad: "%", activo: true },
-  { nombre: "Productos científicos", meta: 12, unidad: "docs", activo: true },
-  { nombre: "Satisfacción de participantes", meta: 90, unidad: "%", activo: true },
-  { nombre: "Avance de malla formativa", meta: 100, unidad: "%", activo: false },
-]
-
-function ParametrosIndicadores() {
-  return (
-    <Panel
-      title="Parámetros de indicadores"
-      description="Configura las metas y umbrales de los indicadores del proyecto"
-      action={
-        <Button size="sm">
-          <Plus className="mr-1.5 h-4 w-4" />
-          Nuevo indicador
-        </Button>
-      }
-    >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {INDICADORES.map((ind) => (
-          <div key={ind.nombre} className="rounded-lg border border-border p-4">
-            <div className="flex items-start justify-between gap-3">
-              <p className="font-medium text-foreground">{ind.nombre}</p>
-              <Switch defaultChecked={ind.activo} />
-            </div>
-            <div className="mt-4 space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Meta objetivo ({ind.unidad})</Label>
-              <Input type="number" defaultValue={ind.meta} />
-            </div>
-          </div>
-        ))}
-      </div>
-    </Panel>
-  )
-}
-
-const PERIODOS = [
-  { nombre: "Diagnóstico inicial", inicio: "01/05/2025", fin: "30/06/2025", estado: "Finalizado" },
-  { nombre: "Formación - Fase 1", inicio: "01/07/2025", fin: "30/10/2025", estado: "En curso" },
-  { nombre: "Validación intermedia", inicio: "01/11/2025", fin: "15/12/2025", estado: "Programado" },
-  { nombre: "Evaluación final", inicio: "01/03/2026", fin: "30/04/2026", estado: "Programado" },
-]
-
-const ESTADO_BADGE: Record<string, "default" | "secondary" | "outline"> = {
-  Finalizado: "secondary",
-  "En curso": "default",
-  Programado: "outline",
-}
-
-function PeriodosEvaluacion() {
-  return (
-    <Panel
-      title="Periodos de evaluación"
-      description="Define las ventanas de tiempo para cada etapa de evaluación"
-      action={
-        <Button size="sm">
-          <Plus className="mr-1.5 h-4 w-4" />
-          Nuevo periodo
-        </Button>
-      }
-    >
-      <div className="overflow-x-auto rounded-md border border-border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Periodo</TableHead>
-              <TableHead>Inicio</TableHead>
-              <TableHead>Fin</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {PERIODOS.map((p) => (
-              <TableRow key={p.nombre}>
-                <TableCell className="font-medium text-foreground">{p.nombre}</TableCell>
-                <TableCell className="text-muted-foreground">{p.inicio}</TableCell>
-                <TableCell className="text-muted-foreground">{p.fin}</TableCell>
-                <TableCell>
-                  <Badge variant={ESTADO_BADGE[p.estado] ?? "outline"}>{p.estado}</Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="h-4 w-4" />
-                    <span className="sr-only">Editar {p.nombre}</span>
-                  </Button>
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>

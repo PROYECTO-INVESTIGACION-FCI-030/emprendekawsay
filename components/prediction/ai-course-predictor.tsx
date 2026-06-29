@@ -1,14 +1,20 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { Bot, CheckCircle2, Database, Plus, Sparkles } from "lucide-react"
+import { Bot, CheckCircle2, Database, LineChart, Plus, Sparkles, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import type { CoursePrediction } from "@/lib/course-prediction"
+import type { CoursePrediction, CoursePredictionProfile } from "@/lib/course-prediction"
 import { crearCursoPredicho } from "@/lib/prediccion-actions"
 import { cn } from "@/lib/utils"
 
-export function AiCoursePredictor({ predictions }: { predictions: CoursePrediction[] }) {
+export function AiCoursePredictor({
+  predictions,
+  profile,
+}: {
+  predictions: CoursePrediction[]
+  profile: CoursePredictionProfile
+}) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [selected, setSelected] = useState<Record<number, string>>({})
@@ -44,6 +50,67 @@ export function AiCoursePredictor({ predictions }: { predictions: CoursePredicti
 
       <div className="space-y-5 px-4 pt-6 sm:px-6">
         {message ? <div className="rounded-md border border-[#8bc9e8] bg-white px-4 py-3 text-sm font-medium text-[#004b87]">{message}</div> : null}
+
+        <section className="rounded-md border border-[#bdd7ea] bg-white shadow-sm">
+          <div className="border-b border-[#d7e7f2] bg-[#eef6fc] px-5 py-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#00529b]">
+              <LineChart className="h-4 w-4" />
+              Perfilamiento de la muestra
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              La IA analiza la base de respuestas y agrupa a las emprendedoras por patrones de formación y demanda.
+            </p>
+          </div>
+          <div className="grid gap-4 p-4 lg:grid-cols-[1.1fr_1.4fr]">
+            <div className="space-y-3">
+              <div className="rounded-md border border-[#d7e7f2] bg-[#f8fbfd] p-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#003b6f]">
+                  <Users className="h-4 w-4 text-[#0077b6]" />
+                  Resumen general
+                </div>
+                <p className="mt-2 text-3xl font-bold text-[#00529b]">{profile.totalRegistros}</p>
+                <p className="text-sm text-muted-foreground">registros analizados para la prediccion de cursos</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {profile.perfilGeneral.map((item) => (
+                  <div key={item.etiqueta} className="rounded-md border border-[#d7e7f2] bg-white p-3">
+                    <p className="text-xs font-semibold uppercase text-[#0077b6]">{item.etiqueta}</p>
+                    <p className="mt-1 font-semibold text-[#003b6f]">{item.valor}</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.detalle}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              {(
+                [
+                  ["Parroquia", profile.segmentos.parroquia],
+                  ["Nivel de instruccion", profile.segmentos.nivelInstruccion],
+                  ["Sector economico", profile.segmentos.sectorEconomico],
+                  ["Ingreso mensual", profile.segmentos.ingresoMensual],
+                  ["Modalidad preferida", profile.segmentos.modalidadPreferida],
+                ] as const
+              ).map(([title, items]) => (
+                <div key={title} className="rounded-md border border-[#d7e7f2] bg-[#f8fbfd] p-4">
+                  <p className="text-sm font-semibold text-[#003b6f]">{title}</p>
+                  <div className="mt-3 space-y-2">
+                    {items.length ? (
+                      items.map((item) => (
+                        <div key={item.categoria} className="flex items-center justify-between gap-3 rounded-md bg-white px-3 py-2 text-sm">
+                          <span className="truncate text-muted-foreground">{item.categoria}</span>
+                          <span className="shrink-0 rounded-full bg-[#e6f4fb] px-2.5 py-1 text-xs font-semibold text-[#00529b]">{item.total}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Sin datos suficientes.</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {blocks.map((block) => {
           const options = predictions.filter((prediction) => prediction.numeroBloque === block)
           return (

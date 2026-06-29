@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { BookOpenCheck, CalendarDays, Clock3, ListChecks } from "lucide-react"
+import { BookOpenCheck, CalendarDays, ClipboardList, Clock3, ListChecks } from "lucide-react"
 import { TaskSubmissionButton } from "@/components/courses/task-submission-button"
 import { buttonVariants } from "@/components/ui/button"
 import type { EntregaTarea, ModuloCurso, TareaCurso } from "@/lib/cursos"
@@ -29,11 +29,13 @@ export function EntrepreneurDashboard({
   modulos,
   tareas,
   entregas,
+  diagnosticSurvey,
 }: {
   nombre: string
   modulos: ModuloCurso[]
   tareas: TareaCurso[]
   entregas: EntregaTarea[]
+  diagnosticSurvey: { titulo: string; bloques: number } | null
 }) {
   const [timelineFilter, setTimelineFilter] = useState<"todos" | "7" | "30">("todos")
   const entregadas = new Set(entregas.map((entrega) => entrega.id_tarea))
@@ -56,6 +58,31 @@ export function EntrepreneurDashboard({
           &iexcl;Hola, {nombre}! &iquest;Lista para continuar impulsando tu negocio?
         </h2>
       </section>
+
+      {diagnosticSurvey ? (
+        <section className="rounded-lg border border-sky-200 bg-sky-50 p-5 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-sky-700 text-white">
+                  <ClipboardList className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Diagnóstico visible</p>
+                  <h3 className="truncate text-lg font-semibold text-slate-950">{diagnosticSurvey.titulo}</h3>
+                </div>
+              </div>
+              <p className="mt-3 text-sm text-slate-700">
+                El formulario está sincronizado con el constructor. Tiene {diagnosticSurvey.bloques} bloques publicados.
+              </p>
+            </div>
+            <Link href="/diagnostico/encuesta" className={buttonVariants({ className: "shrink-0" })}>
+              Responder diagnóstico
+              <ClipboardList className="ml-1.5 h-4 w-4" />
+            </Link>
+          </div>
+        </section>
+      ) : null}
 
       <section className="grid gap-5 rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6 lg:grid-cols-[auto_1fr] lg:items-center lg:gap-8">
         <div

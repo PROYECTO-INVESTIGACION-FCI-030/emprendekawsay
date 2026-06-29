@@ -33,14 +33,30 @@ export async function GET(request: NextRequest) {
           .maybeSingle()
 
         const { data: userData } = await admin.auth.admin.getUserById(userId)
-        await admin.from("historial_ingresos").insert({
+        const basePayload = {
           id_usuario: userId,
           nombre_usuario: perfil?.nombre_completo ?? userData.user?.user_metadata?.nombre_completo ?? null,
           email_usuario: perfil?.email ?? userData.user?.email ?? null,
           rol_usuario: perfil?.rol ?? null,
           ruta: next,
           user_agent: request.headers.get("user-agent"),
-        })
+        }
+
+        const extendedPayload = {
+          ...basePayload,
+          pagina_nombre: next,
+          accion: type === "invite" ? "invitacion" : "inicio_sesion",
+        }
+
+        let { error } = await admin.from("historial_ingresos").insert(extendedPayload)
+        if (error && /column .* does not exist|record .* has no column/i.test(error.message)) {
+          const fallback = await admin.from("historial_ingresos").insert(basePayload)
+          error = fallback.error
+        }
+
+        if (error) {
+          throw error
+        }
         await admin.from("perfiles_usuario").update({ ultimo_acceso: new Date().toISOString() }).eq("id", userId)
       }
       if (type === "recovery" || type === "invite") {

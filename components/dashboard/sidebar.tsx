@@ -12,7 +12,6 @@ import {
   FileText,
   FlaskConical,
   FolderKanban,
-  Headphones,
   LayoutDashboard,
   LineChart,
   Network,
@@ -31,18 +30,28 @@ const navItems = [
   { label: "Diseño de Cursos", icon: BookOpenCheck, href: "/diseno-cursos", roles: ["administradora", "investigadora", "formadora"] },
   { label: "Malla Formativa", icon: Network, href: "/malla-formativa", roles: ["administradora", "investigadora", "formadora"] },
   { label: "Formación", icon: BookOpenCheck, href: "/malla-formativa", roles: ["mujer_emprendedora"] },
-  { label: "Validación (Encuesta)", icon: CheckSquare, href: "/validacion", roles: ["administradora", "investigadora"] },
   { label: "Evaluaciones", icon: CheckSquare, href: "/evaluaciones", roles: ["mujer_emprendedora"] },
   { label: "Certificados", icon: Award, href: "/certificados", roles: ["mujer_emprendedora"] },
-  { label: "Apoyo técnico", icon: Headphones, href: "/apoyo-tecnico", roles: ["mujer_emprendedora"] },
   { label: "Producción Científica", icon: FlaskConical, href: "/produccion", roles: ["administradora", "investigadora"] },
   { label: "Avance del Proyecto", icon: TrendingUp, href: "/avance", roles: ["administradora", "investigadora", "formadora", "institucion_aliada"] },
   { label: "Reportes", icon: FileText, href: "/reportes", roles: ["administradora", "investigadora", "institucion_aliada"] },
   { label: "Configuración", icon: Settings, href: "/configuracion", roles: ["administradora"] },
 ]
 
-function visibleForRole(item: (typeof navItems)[number], rolRaw: string | null | undefined) {
-  return item.roles.includes("all") || (!!rolRaw && item.roles.includes(rolRaw))
+function visibleForRole(
+  item: (typeof navItems)[number],
+  rolRaw: string | null | undefined,
+  projectInfo: ProjectInfoData,
+) {
+  const baseVisible = item.roles.includes("all") || (!!rolRaw && item.roles.includes(rolRaw))
+  if (!baseVisible) return false
+
+  if (rolRaw === "mujer_emprendedora") {
+    if (item.href === "/evaluaciones") return true
+    if (item.href === "/certificados") return false
+  }
+
+  return true
 }
 
 function ProjectInfo({ info }: { info: ProjectInfoData }) {
@@ -91,7 +100,7 @@ export function Sidebar({
   projectInfo: ProjectInfoData
 }) {
   const pathname = usePathname()
-  const visibles = navItems.filter((item) => visibleForRole(item, rolRaw))
+  const visibles = navItems.filter((item) => visibleForRole(item, rolRaw, projectInfo))
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-slate-200 bg-white text-slate-800">

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useTransition } from "react"
 import { ExternalLink, FilePlus2, Pencil, Trash2, Users } from "lucide-react"
@@ -19,12 +19,18 @@ import type { Investigator, ScientificProduct } from "@/lib/scientific-productio
 import { deleteScientificProduct, saveScientificProduct } from "@/lib/scientific-production-actions"
 import { cn } from "@/lib/utils"
 
+function toDateInputValue(value: string | null | undefined) {
+  if (!value) return ""
+  const iso = new Date(value)
+  if (!Number.isNaN(iso.getTime())) return iso.toISOString().slice(0, 10)
+  const plain = new Date(`${value}T00:00:00`)
+  if (!Number.isNaN(plain.getTime())) return plain.toISOString().slice(0, 10)
+  return ""
+}
+
 const TYPE_LABELS = {
-  articulo_scopus: "Artículo indexado Scopus",
-  articulo_latindex: "Artículo indexado Latindex",
-  ponencia: "Ponencia en congreso",
-  capitulo_libro: "Capítulo de libro",
-  politica_publica: "Insumo para política pública",
+  alto_impacto: "Alto impacto",
+  regional: "Regional",
 }
 
 const STATE_LABELS = {
@@ -55,10 +61,11 @@ export function ScientificProductionManager({
   const [editing, setEditing] = useState<ScientificProduct | null>(null)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
-  const [type, setType] = useState<ScientificProduct["tipo"]>("articulo_scopus")
+  const [type, setType] = useState<ScientificProduct["tipo"]>("alto_impacto")
   const [status, setStatus] = useState<ScientificProduct["estado"]>("pendiente")
   const [evidence, setEvidence] = useState("")
   const [fechaObjetivo, setFechaObjetivo] = useState("")
+  const [fechaPublicacion, setFechaPublicacion] = useState("")
   const [responsibles, setResponsibles] = useState<string[]>([])
   const [message, setMessage] = useState("")
   const visible = products.filter((product) => view === "ejecutados" ? product.estado === "publicado" : product.estado !== "publicado")
@@ -67,10 +74,11 @@ export function ScientificProductionManager({
     setEditing(product ?? null)
     setTitle(product?.titulo ?? "")
     setDescription(product?.descripcion ?? "")
-    setType(product?.tipo ?? "articulo_scopus")
+    setType(product?.tipo ?? "alto_impacto")
     setStatus(product?.estado ?? "pendiente")
     setEvidence(product?.evidencia_url ?? "")
     setFechaObjetivo(product?.fecha_objetivo ?? "")
+    setFechaPublicacion(toDateInputValue(product?.fecha_publicacion))
     setResponsibles(product?.investigadores.map((item) => item.id) ?? [])
     setMessage("")
     setOpen(true)
@@ -106,7 +114,7 @@ export function ScientificProductionManager({
       <div className="space-y-5 px-4 pt-6 sm:px-6">
         {message ? <div className="rounded-md border border-[#8bc9e8] bg-white px-4 py-3 text-sm text-[#004b87]">{message}</div> : null}
         <div className="rounded-md border border-dashed border-[#8bc9e8] bg-white px-4 py-3 text-sm text-[#004b87]">
-          Si no tienes responsables todavía, guarda el producto sin asignarlos y complétalo después desde esta misma pantalla.
+          Si todavía no tienes responsables, guarda el producto sin asignarlos y complétalo después desde esta misma pantalla.
         </div>
         {investigators.length === 0 ? (
           <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -200,11 +208,8 @@ export function ScientificProductionManager({
             <label className="block space-y-1.5 text-sm font-medium">
               <span>Tipo de producto</span>
               <select name="tipo" value={type} onChange={(event) => setType(event.target.value as ScientificProduct["tipo"])} className="h-8 w-full rounded-lg border border-input bg-background px-2.5">
-                <option value="articulo_scopus">Artículo indexado Scopus</option>
-                <option value="articulo_latindex">Artículo indexado Latindex</option>
-                <option value="ponencia">Ponencia en congreso</option>
-                <option value="capitulo_libro">Capítulo de libro</option>
-                <option value="politica_publica">Insumo para política pública</option>
+                <option value="alto_impacto">Alto impacto</option>
+                <option value="regional">Regional</option>
               </select>
             </label>
             <div className="space-y-2">
@@ -245,8 +250,21 @@ export function ScientificProductionManager({
             </label>
             <label className="block space-y-1.5 text-sm font-medium">
               <span>Fecha objetivo</span>
-              <Input name="fecha_objetivo" type="date" value={fechaObjetivo} onChange={(event) => setFechaObjetivo(event.target.value)} />
+              <Input name="fecha_objetivo" type="date" value={fechaObjetivo} onChange={(event) => setFechaObjetivo(event.target.value)} required />
             </label>
+            <label className="block space-y-1.5 text-sm font-medium">
+              <span>Fecha de publicación</span>
+              <Input
+                name="fecha_publicacion"
+                type="date"
+                value={fechaPublicacion}
+                onChange={(event) => setFechaPublicacion(event.target.value)}
+                disabled={status !== "publicado"}
+              />
+            </label>
+            <p className="text-xs text-muted-foreground">
+              Si el estado cambia a publicado, puedes guardar la fecha real de publicación para el dashboard.
+            </p>
             {message ? <p className="text-sm text-destructive">{message}</p> : null}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
@@ -258,3 +276,6 @@ export function ScientificProductionManager({
     </div>
   )
 }
+
+
+

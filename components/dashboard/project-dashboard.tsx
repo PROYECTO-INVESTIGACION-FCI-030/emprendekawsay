@@ -15,6 +15,7 @@ import {
   CartesianGrid,
   Cell,
   Label,
+  LabelList,
   Line,
   LineChart,
   Pie,
@@ -35,7 +36,6 @@ import {
 } from "@/components/ui/chart"
 import type { ProjectDashboardData } from "@/lib/project-dashboard-data"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
@@ -46,8 +46,8 @@ const lineConfig = {
 }
 
 const productionConfig = {
-  planificado: { label: "Planificado", color: "#3B82F6" },
-  ejecutado: { label: "Ejecutado", color: "#16A34A" },
+  altoImpacto: { label: "Alto impacto", color: "#3B82F6" },
+  regional: { label: "Regional", color: "#16A34A" },
 }
 
 const needsConfig = {
@@ -70,6 +70,24 @@ const radarConfig = {
 const pieConfig = {
   valor: { label: "Cursos" },
 }
+
+const MONTH_ORDER: Record<string, number> = {
+  ene: 1,
+  feb: 2,
+  mar: 3,
+  abr: 4,
+  may: 5,
+  jun: 6,
+  jul: 7,
+  ago: 8,
+  sep: 9,
+  set: 9,
+  oct: 10,
+  nov: 11,
+  dic: 12,
+}
+
+const MONTH_NAMES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
 
 type DashboardCardData = {
   title: string
@@ -111,18 +129,71 @@ function ChartFilter({
 }
 
 function filterTimeData(data: ProjectDashboardData["tiempo"], mode: string) {
-  if (mode === "anual") {
-    const byYear = new Map<string, ProjectDashboardData["tiempo"][number]>()
-    for (const item of data) {
-      const year = item.fecha.match(/\d{4}/)?.[0] ?? item.fecha
-      byYear.set(year, { ...item, fecha: year })
+  const sourceApplied = [...data].sort((a, b) => {
+    const parseValue = (value: string) => {
+      const [monthRaw, yearRaw] = value.split(/\s+/)
+      const month = MONTH_ORDER[monthRaw.slice(0, 3).toLowerCase()] ?? 0
+      const year = Number(yearRaw) || 0
+      return year * 100 + month
     }
-    return [...byYear.values()]
+    return parseValue(a.fecha) - parseValue(b.fecha)
+  })
+  if (mode === "anual") {
+    const byYear = new Map<string, { fecha: string; planificado: number; ejecutado: number }>()
+    let minYear = Number.POSITIVE_INFINITY
+    let maxYear = 0
+    for (const item of sourceApplied) {
+      const year = Number(item.fecha.match(/\d{4}/)?.[0] ?? item.fecha)
+      if (!Number.isFinite(year)) continue
+      if (year < minYear) minYear = year
+      if (year > maxYear) maxYear = year
+      byYear.set(String(year), { fecha: String(year), planificado: item.planificado, ejecutado: item.ejecutado })
+    }
+    const timeline: { fecha: string; planificado: number; ejecutado: number }[] = []
+    const startYear = Number.isFinite(minYear) ? minYear : maxYear || 2025
+    const endYear = maxYear || startYear
+    for (let year = startYear; year <= endYear; year += 1) {
+      timeline.push(
+        byYear.get(String(year)) ?? {
+          fecha: String(year),
+          planificado: 0,
+          ejecutado: 0,
+        },
+      )
+    }
+    return timeline
   }
-  if (mode === "semestral") {
-    return data.filter((_, index) => index % 2 === 0 || index === data.length - 1)
+  if (mode === "mensual") {
+    const byMonth = new Map<string, { fecha: string; planificado: number; ejecutado: number }>()
+    for (const item of sourceApplied) {
+      const [monthRaw, yearRaw] = item.fecha.split(/\s+/)
+      const month = MONTH_ORDER[monthRaw.slice(0, 3).toLowerCase()] ?? 0
+      const year = Number(yearRaw) || 0
+      const key = `${year}-${String(month).padStart(2, "0")}`
+      const current = byMonth.get(key) ?? { fecha: `${MONTH_NAMES[month - 1] ?? monthRaw} ${year}`, planificado: 0, ejecutado: 0 }
+      current.planificado += item.planificado
+      current.ejecutado += item.ejecutado
+      byMonth.set(key, current)
+    }
+
+    const start = new Date(2026, 5, 1)
+    const end = new Date(2027, 5, 1)
+    const timeline: { fecha: string; planificado: number; ejecutado: number }[] = []
+    for (let current = new Date(start); current <= end; current.setMonth(current.getMonth() + 1)) {
+      const year = current.getFullYear()
+      const month = current.getMonth() + 1
+      const key = `${year}-${String(month).padStart(2, "0")}`
+      timeline.push(
+        byMonth.get(key) ?? {
+          fecha: `${MONTH_NAMES[month - 1]} ${year}`,
+          planificado: 0,
+          ejecutado: 0,
+        },
+      )
+    }
+    return timeline
   }
-  return data
+  return sourceApplied
 }
 
 function DashboardCard({
@@ -220,8 +291,8 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
     () =>
       data.produccionPorInvestigador.map((item) => ({
         ...item,
-        planificado: productionFilter === "ejecutado" ? 0 : item.planificado,
-        ejecutado: productionFilter === "planificado" ? 0 : item.ejecutado,
+        altoImpacto: productionFilter === "regional" ? 0 : item.altoImpacto,
+        regional: productionFilter === "altoImpacto" ? 0 : item.regional,
       })),
     [data.produccionPorInvestigador, productionFilter],
   )
@@ -235,6 +306,7 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
     const limit = Number(needsFilter.replace("top", ""))
     return data.necesidades.slice(0, Number.isFinite(limit) ? limit : 5)
   }, [data.necesidades, needsFilter])
+  const activities = useMemo(() => [...data.actividades].sort((a, b) => a.fechaOrden.localeCompare(b.fechaOrden)), [data.actividades])
 
   return (
     <div className="space-y-4 px-6 pb-8">
@@ -248,10 +320,6 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
             <span>{data.periodo}</span>
           </div>
-          <Button>
-            <FileText className="mr-1.5 h-4 w-4" />
-            Exportar reporte
-          </Button>
         </div>
       </div>
 
@@ -264,14 +332,15 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_1fr_1fr]">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-3">
-            <CardTitle className="text-base">Avance del Proyecto en el Tiempo</CardTitle>
-            <ChartFilter
+            <div>
+              <CardTitle className="text-base">Avance del Proyecto en el Tiempo</CardTitle>
+            </div>
+              <ChartFilter
               label="Filtrar avance del proyecto"
               value={timeFilter}
               onChange={setTimeFilter}
               options={[
                 { value: "mensual", label: "Mensual" },
-                { value: "semestral", label: "Semestral" },
                 { value: "anual", label: "Anual" },
               ]}
             />
@@ -282,10 +351,16 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="fecha" tickLine={false} axisLine={false} tickMargin={8} style={{ fontSize: 11 }} />
                 <YAxis tickLine={false} axisLine={false} tickMargin={8} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
-                <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value, name) => `${name === "planificado" ? "Planificado" : "Ejecutado"}: ${value}%`}
+                    />
+                  }
+                />
                 <ChartLegend content={<ChartLegendContent />} />
-                <Line dataKey="planificado" type="monotone" stroke="var(--color-planificado)" strokeWidth={2} strokeDasharray="6 5" dot={false} />
-                <Line dataKey="ejecutado" type="monotone" stroke="var(--color-ejecutado)" strokeWidth={2.5} dot={{ r: 3 }} />
+                <Line dataKey="planificado" type="monotone" stroke="var(--color-planificado)" strokeWidth={2.5} strokeDasharray="6 5" dot={{ r: 4 }} activeDot={false} />
+                <Line dataKey="ejecutado" type="monotone" stroke="var(--color-ejecutado)" strokeWidth={3} dot={{ r: 4 }} activeDot={false} />
               </LineChart>
             </ChartContainer>
           </CardContent>
@@ -300,8 +375,8 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
               onChange={setProductionFilter}
               options={[
                 { value: "todos", label: "Todos" },
-                { value: "planificado", label: "Planificado" },
-                { value: "ejecutado", label: "Ejecutado" },
+                { value: "altoImpacto", label: "Alto impacto" },
+                { value: "regional", label: "Regional" },
               ]}
             />
           </CardHeader>
@@ -313,8 +388,12 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
                 <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <ChartLegend content={<ChartLegendContent />} />
-                <Bar dataKey="planificado" fill="var(--color-planificado)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="ejecutado" fill="var(--color-ejecutado)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="altoImpacto" fill="var(--color-altoImpacto)" radius={[4, 4, 0, 0]}>
+                  <LabelList dataKey="altoImpacto" position="top" className="fill-foreground text-xs font-medium" />
+                </Bar>
+                <Bar dataKey="regional" fill="var(--color-regional)" radius={[4, 4, 0, 0]}>
+                  <LabelList dataKey="regional" position="top" className="fill-foreground text-xs font-medium" />
+                </Bar>
               </BarChart>
             </ChartContainer>
           </CardContent>
@@ -430,14 +509,14 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
           </CardHeader>
           <CardContent>
             <ul className="space-y-3">
-              {data.actividades.map((activity) => (
+              {activities.map((activity) => (
                 <li key={activity.titulo} className="flex items-center gap-3">
                   <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white", activity.color)}>
                     <BarChart3 className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">{activity.titulo}</p>
-                    <p className="text-xs text-muted-foreground">{activity.fecha}</p>
+                    <p className="text-xs text-muted-foreground">{activity.fecha} · {activity.fuente}</p>
                   </div>
                   <Badge variant={activity.estado === "En proceso" ? "default" : "secondary"}>{activity.estado}</Badge>
                 </li>

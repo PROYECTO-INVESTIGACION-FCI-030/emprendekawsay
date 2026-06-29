@@ -5,7 +5,7 @@ import { getCoursePredictions } from "@/lib/course-prediction"
 import { getProjectDashboardData } from "@/lib/project-dashboard"
 
 export default async function AnaliticaPage() {
-  const [data, predictions] = await Promise.all([getProjectDashboardData(), getCoursePredictions()])
+  const [data, predictionResult] = await Promise.all([getProjectDashboardData(), getCoursePredictions()])
 
   return (
     <AppShell>
@@ -14,7 +14,7 @@ export default async function AnaliticaPage() {
         descripcion="Resultados sincronizados con las preguntas y respuestas del cuestionario limpio"
         showControls={false}
       />
-      <NeedsAnalytics data={data} predictions={predictions} />
+      <NeedsAnalytics data={data} predictions={predictionResult.cursos} />
     </AppShell>
   )
 }

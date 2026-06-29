@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { Brain, Lightbulb, TrendingUp } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts"
 import { Badge } from "@/components/ui/badge"
@@ -21,8 +22,13 @@ export function NeedsAnalytics({
   data: ProjectDashboardData
   predictions: CoursePrediction[]
 }) {
-  const topPrediction = [...predictions].sort((a, b) => b.brecha - a.brecha).slice(0, 5)
-  const strongestNeed = data.necesidades[0]
+  const safePredictions = useMemo(() => (Array.isArray(predictions) ? predictions : []), [predictions])
+  const topPrediction = useMemo(() => [...safePredictions].sort((a, b) => b.brecha - a.brecha).slice(0, 5), [safePredictions])
+  const topNeeds = useMemo(() => [...data.necesidades].sort((a, b) => b.valor - a.valor).slice(0, 5), [data.necesidades])
+  const strongestNeed = topNeeds[0]
+  const dominantBlock = topPrediction[0]?.bloque ?? "Sin datos suficientes"
+  const dominantCourse = topPrediction[0]
+  const responseLabel = data.validacion.encuestadas === 1 ? "respuesta analizada" : "respuestas analizadas"
 
   return (
     <div className="space-y-5 px-6 pb-8">
@@ -49,11 +55,11 @@ export function NeedsAnalytics({
                 <Brain className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-cyan-900">Respuestas analizadas</p>
+                <p className="text-sm text-cyan-900">{responseLabel}</p>
                 <p className="text-2xl font-semibold text-cyan-950">{data.validacion.encuestadas}</p>
               </div>
             </div>
-            <p className="mt-3 text-sm text-cyan-900">Base: cuestionario_limpio_respuestas</p>
+            <p className="mt-3 text-sm text-cyan-900">Lectura automática desde el cuestionario limpio.</p>
           </CardContent>
         </Card>
 
@@ -65,7 +71,7 @@ export function NeedsAnalytics({
               </div>
               <div>
                 <p className="text-sm text-amber-900">Cursos sugeridos</p>
-                <p className="text-2xl font-semibold text-amber-950">{predictions.length}</p>
+                <p className="text-2xl font-semibold text-amber-950">{safePredictions.length}</p>
               </div>
             </div>
             <p className="mt-3 text-sm text-amber-900">Generados por brechas de conocimiento detectadas.</p>
@@ -80,13 +86,17 @@ export function NeedsAnalytics({
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <BarChart data={data.necesidades} layout="vertical" margin={{ left: 10, right: 36 }}>
+              <BarChart data={topNeeds} layout="vertical" margin={{ left: 10, right: 36 }}>
                 <CartesianGrid horizontal={false} strokeDasharray="3 3" />
                 <XAxis type="number" domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
                 <YAxis dataKey="necesidad" type="category" width={145} tickLine={false} axisLine={false} />
                 <ChartTooltip content={<ChartTooltipContent formatter={(value) => `${value}%`} />} />
-                <Bar dataKey="valor" radius={[0, 4, 4, 0]} label={{ position: "right", formatter: (value: unknown) => `${value}%`, fontSize: 11 }}>
-                  {data.necesidades.map((item, index) => (
+                <Bar
+                  dataKey="valor"
+                  radius={[0, 4, 4, 0]}
+                  label={{ position: "right", formatter: (value: unknown) => `${value}%`, fontSize: 11 }}
+                >
+                  {topNeeds.map((item, index) => (
                     <Cell key={item.necesidad} fill={colors[index] ?? "#2563EB"} />
                   ))}
                 </Bar>
@@ -100,6 +110,15 @@ export function NeedsAnalytics({
             <CardTitle className="text-base">Lectura del agente IA</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            <div className="rounded-md border border-border bg-card p-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Bloque dominante</p>
+              <p className="mt-1 text-sm font-semibold text-foreground">{dominantBlock}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {dominantCourse
+                  ? `${dominantCourse.titulo} con prioridad ${dominantCourse.brecha}%`
+                  : "Sin sugerencias suficientes todavía."}
+              </p>
+            </div>
             {topPrediction.map((prediction) => (
               <div key={prediction.id} className="rounded-md border border-border bg-card p-3">
                 <div className="flex items-start justify-between gap-3">
@@ -138,12 +157,12 @@ export function NeedsAnalytics({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Fuentes de análisis</CardTitle>
+            <CardTitle className="text-base">Lectura automática</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 text-sm text-muted-foreground">
-            <p>Uso de tecnología, marketing digital, redes de apoyo, educación financiera y formalización se calculan desde respuestas débiles como “no”, “a veces”, “solo espero”, “no conozco” o dificultades reportadas.</p>
-            <p>La predicción de cursos toma esas mismas brechas por bloque y propone títulos concretos que luego se pueden crear en Diseño de Cursos.</p>
-            <p>Las competencias usan el mapeo solicitado: Financiera, Digital, Comercial, Innovación y Gestión según las preguntas 1 a 23 del cuestionario limpio.</p>
+            <p>Las tarjetas y gráficos se actualizan según el conteo real de respuestas por pregunta y el ranking de necesidades detectadas.</p>
+            <p>La predicción toma las brechas del cuestionario limpio y prioriza cursos por bloque según el nivel de necesidad observado.</p>
+            <p>Las competencias se calculan con el mapeo de preguntas ya definido para Financiera, Digital, Comercial, Innovación y Gestión.</p>
           </CardContent>
         </Card>
       </div>

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import { HeaderSync } from "@/components/dashboard/header-sync"
+import { NavigationHistoryTracker } from "@/components/dashboard/navigation-history-tracker"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { getNotificacionesUsuario } from "@/lib/notificaciones"
 import { getPerfilContext } from "@/lib/perfil"
@@ -14,6 +15,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar rolRaw={ctx.rolRaw} projectInfo={projectInfo} />
       <div className="flex flex-1 flex-col overflow-hidden">
+        <NavigationHistoryTracker />
         <HeaderSync
           initialProjectName={projectInfo.nombre}
           initialProjectDescription={projectInfo.descripcion}

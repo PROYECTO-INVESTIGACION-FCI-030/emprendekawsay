@@ -22,6 +22,29 @@ export const PAGINAS_PERMITIDAS: PermisoPagina[] = [
   { codigo: "reportes", nombre: "Reportes", ruta: "/reportes", modulo: "reportes", descripcion: "Exportación y reportes del sistema" },
 ]
 
+export function obtenerNombrePaginaPorRuta(ruta: string | null | undefined) {
+  if (!ruta) return "Sin ruta"
+  const rutaNormalizada = ruta.split("?")[0].split("#")[0]
+  const coincidencia = PAGINAS_PERMITIDAS.find(
+    (pagina) => rutaNormalizada === pagina.ruta || rutaNormalizada.startsWith(`${pagina.ruta}/`),
+  )
+  return coincidencia?.nombre ?? rutaNormalizada
+}
+
+export function obtenerAccionPorRuta(
+  accion: string | null | undefined,
+  ruta: string | null | undefined,
+) {
+  const accionNormalizada = accion?.trim().toLowerCase() || ""
+  if (accionNormalizada) {
+    return accionNormalizada
+  }
+
+  const rutaNormalizada = ruta?.split("?")[0].split("#")[0] ?? ""
+  if (!rutaNormalizada) return "navegacion"
+  return rutaNormalizada === "/" ? "ingreso_dashboard" : "navegacion_pagina"
+}
+
 export type PermisosConfiguracion = {
   paginas: PermisoPagina[]
   permisosPorRol: Record<string, string[]>
@@ -66,10 +89,25 @@ export async function obtenerHistorialIngresos(limit = 12) {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("historial_ingresos")
-    .select("id, id_usuario, nombre_usuario, email_usuario, rol_usuario, fecha_ingreso, ruta, user_agent")
+    .select("id, id_usuario, nombre_usuario, email_usuario, rol_usuario, fecha_ingreso, ruta, user_agent, accion, pagina_nombre")
     .order("fecha_ingreso", { ascending: false })
     .limit(limit)
 
   if (error || !data) return []
-  return data
+  return (data as Array<{
+    id: string
+    id_usuario: string
+    nombre_usuario: string | null
+    email_usuario: string | null
+    rol_usuario: string | null
+    fecha_ingreso: string
+    ruta: string | null
+    user_agent: string | null
+    accion?: string | null
+    pagina_nombre?: string | null
+  }>).map((item) => ({
+    ...item,
+    pagina_nombre: item.pagina_nombre ?? obtenerNombrePaginaPorRuta(item.ruta),
+    accion: obtenerAccionPorRuta(item.accion, item.ruta),
+  }))
 }

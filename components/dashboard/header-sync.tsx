@@ -54,6 +54,11 @@ export function HeaderSync({
     }
   }, [initialNombre, initialAvatarUrl, initialNotificacionesActivas, initialProjectName, initialProjectDescription])
 
+  useEffect(() => {
+    setProjectName(initialProjectName)
+    setProjectDescription(initialProjectDescription)
+  }, [initialProjectName, initialProjectDescription])
+
   return (
     <Header
       projectName={projectName}
