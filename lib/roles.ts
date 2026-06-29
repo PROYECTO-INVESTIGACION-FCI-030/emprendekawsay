@@ -10,15 +10,18 @@ export const ROLES_LABEL: Record<string, string> = {
 
 export const ROLES_INVERSO: Record<string, string> = {
   Administradora: "administradora",
+  Administrador: "administradora",
+  Admin: "administradora",
   Investigadora: "investigadora",
   Formadora: "formadora",
   "Mujer emprendedora": "mujer_emprendedora",
   "Institucion aliada": "institucion_aliada",
-  "Institución aliada": "institucion_aliada",
+  "InstituciÃ³n aliada": "institucion_aliada",
 }
 
 export function normalizarRol(rol: string) {
-  return ROLES_INVERSO[rol] ?? rol.toLowerCase().trim().replace(/\s+/g, "_")
+  const limpio = rol.trim()
+  return ROLES_INVERSO[limpio] ?? limpio.toLowerCase().replace(/\s+/g, "_")
 }
 
 export function etiquetaRol(rol: string | null | undefined) {

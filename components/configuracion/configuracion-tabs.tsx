@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Check, FolderKanban, Loader2, Pencil, Plus, Search, Trash2, Users } from "lucide-react"
+import { Check, FolderKanban, Loader2, Pencil, Search, Trash2, Users } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -15,6 +15,14 @@ import { cn } from "@/lib/utils"
 import type { ProjectInfo } from "@/lib/project-info"
 import { actualizarConfiguracionProyecto } from "@/lib/project-config-actions"
 import { crearUsuario, actualizarUsuario, eliminarUsuario } from "@/lib/usuarios-actions"
+
+const ROLES_EDITABLES = [
+  { value: "administradora", label: "Administradora" },
+  { value: "investigadora", label: "Investigadora" },
+  { value: "formadora", label: "Formadora" },
+  { value: "mujer_emprendedora", label: "Mujer emprendedora" },
+  { value: "institucion_aliada", label: "Institución aliada" },
+]
 
 const SECCIONES = [
   { value: "proyecto", label: "Proyecto", icon: FolderKanban },
@@ -345,6 +353,21 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
               <Label htmlFor="new-email">Correo</Label>
               <Input id="new-email" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
             </div>
+            <div>
+              <Label htmlFor="new-rol">Rol</Label>
+              <select
+                id="new-rol"
+                value={newRol}
+                onChange={(e) => setNewRol(e.target.value)}
+                className="mt-1 h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-primary"
+              >
+                {ROLES_EDITABLES.map((rol) => (
+                  <option key={rol.value} value={rol.value}>
+                    {rol.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpenCreate(false)}>Cancelar</Button>
@@ -370,6 +393,21 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
             <div>
               <Label htmlFor="edit-email">Correo</Label>
               <Input id="edit-email" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="edit-rol">Rol</Label>
+              <select
+                id="edit-rol"
+                value={editRol}
+                onChange={(e) => setEditRol(e.target.value)}
+                className="mt-1 h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-primary"
+              >
+                {ROLES_EDITABLES.map((rol) => (
+                  <option key={rol.value} value={rol.value}>
+                    {rol.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <DialogFooter>
