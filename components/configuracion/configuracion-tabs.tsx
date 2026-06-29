@@ -214,6 +214,7 @@ function ConfiguracionProyecto({ projectInfo, esAdmin }: { projectInfo: ProjectI
 }
 
 function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; nombre_completo: string | null; email: string | null; rol: string; activa: boolean }>; esAdmin: boolean }) {
+  const router = useRouter()
   const [query, setQuery] = useState("")
   const [openCreate, setOpenCreate] = useState(false)
   const [openEdit, setOpenEdit] = useState(false)
@@ -243,7 +244,7 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
       setNewEmail("")
       setNewNombre("")
       setNewRol("investigadora")
-      window.location.reload()
+      router.refresh()
     } else {
       alert(`Error: ${res.message}`)
     }
@@ -261,7 +262,7 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
     setLoading(false)
     if (res.ok) {
       setOpenEdit(false)
-      window.location.reload()
+      router.refresh()
     } else {
       alert(`Error: ${res.message}`)
     }
@@ -299,9 +300,15 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
         title="Gestión de usuarios"
         description="Administra a las personas con acceso a la plataforma."
       >
-        <div className="relative mb-4 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por nombre o correo..." className="pl-9" />
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative max-w-sm flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por nombre o correo..." className="pl-9" />
+          </div>
+          <Button onClick={() => setOpenCreate(true)} className="self-start">
+            <Plus className="mr-2 h-4 w-4" />
+            Crear usuario
+          </Button>
         </div>
         <div className="overflow-x-auto rounded-md border border-border">
           <Table>

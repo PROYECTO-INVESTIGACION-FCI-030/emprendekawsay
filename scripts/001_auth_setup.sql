@@ -61,8 +61,22 @@ STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT rol FROM public.perfiles_usuario WHERE id = auth.uid() LIMIT 1;
+  SELECT COALESCE(
+    (SELECT p.rol FROM public.perfiles_usuario p WHERE p.id = auth.uid() LIMIT 1),
+    (SELECT r.rol FROM public.roles_usuario r WHERE r.id_usuario = auth.uid() ORDER BY r.fecha_asignacion DESC LIMIT 1)
+  );
 $$;
+
+-- Sincroniza el rol inline desde roles_usuario para usuarios existentes
+UPDATE public.perfiles_usuario p
+SET rol = r.rol
+FROM (
+  SELECT DISTINCT ON (id_usuario) id_usuario, rol
+  FROM public.roles_usuario
+  ORDER BY id_usuario, fecha_asignacion DESC
+) r
+WHERE p.id = r.id_usuario
+  AND (p.rol IS NULL OR p.rol <> r.rol);
 
 -- 6. POLÍTICAS RLS — perfiles_usuario
 -- Limpiar políticas anteriores
