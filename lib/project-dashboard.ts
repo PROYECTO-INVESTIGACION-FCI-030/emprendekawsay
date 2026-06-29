@@ -107,30 +107,30 @@ function answerScore(key: keyof DashboardRow, value: string | null | undefined):
     if (normalized.includes("600")) return 80
     if (normalized.includes("400")) return 60
     if (normalized.includes("200")) return 40
-    return 20
+    return 0
   }
   if (key === "nivel_instruccion") {
     if (normalized.includes("postgrado")) return 100
     if (normalized.includes("superior")) return 80
     if (normalized.includes("tecn")) return 60
     if (normalized.includes("secund")) return 40
-    return 20
+    return 0
   }
   if (key === "dificultad_tecnologia") {
     if (includesAny(value, ["ninguna", "no he tenido", "sin dificultad"])) return 100
     if (includesAny(value, ["a veces", "poca"])) return 50
-    return 20
+    return 0
   }
   if (key === "origen_conocimiento_cultural") {
     if (normalized.includes("copia")) return 0
     if (includesAny(value, ["tradicion", "familia", "inspiracion", "ancestral"])) return 100
-    return 50
+    return 0
   }
 
   if (includesAny(value, ["no", "ninguno", "solo espero", "solo efectivo", "intuicion"])) return 0
   if (includesAny(value, ["a veces", "parcial", "en proceso", "restriccion", "me gustaria"])) return 50
   if (includesAny(value, ["si", "activa", "aplicacion", "software", "costo +", "muy importante"])) return 100
-  return 50
+  return 0
 }
 
 function needsSupport(value: string | null | undefined) {
@@ -165,43 +165,10 @@ function topItems(rows: DashboardRow[], key: keyof DashboardRow, limit = 5) {
 
 function calculateDashboard(rows: DashboardRow[]): ProjectDashboardData {
   const total = rows.length
-  const emptySurveyMetrics = {
-    necesidades: [
-      { necesidad: "Marketing digital", valor: 0 },
-      { necesidad: "Uso de tecnología", valor: 0 },
-      { necesidad: "Educación financiera", valor: 0 },
-      { necesidad: "Formalización", valor: 0 },
-      { necesidad: "Redes de apoyo", valor: 0 },
-    ],
-    competencias: [
-      { competencia: "Financiera", valor: 0 },
-      { competencia: "Digital", valor: 0 },
-      { competencia: "Comercial", valor: 0 },
-      { competencia: "Innovación", valor: 0 },
-      { competencia: "Gestión", valor: 0 },
-    ],
-    diagnostico: {
-      respuestas: 0,
-      formalizacion: 0,
-      interesParticipacion: 0,
-      usoDigital: 0,
-      parroquias: [],
-      sectores: [],
-      etnias: [],
-      modalidades: [],
-    },
-  }
-
-  if (total === 0) {
-    return {
-      ...fallbackProjectDashboardData,
-      validacion: {
-        encuestadas: 0,
-        meta: fallbackProjectDashboardData.validacion.meta,
-        porcentaje: 0,
-      },
-      ...emptySurveyMetrics,
-    }
+  const averageScore = (keys: (keyof DashboardRow)[]) => {
+    const values = rows.flatMap((row) => keys.map((key) => answerScore(key, row[key])).filter((value): value is number => value !== null))
+    if (!values.length) return 0
+    return Math.round(values.reduce((acc, value) => acc + value, 0) / values.length)
   }
 
   const marketingDigital = rows.filter((row) => {
@@ -239,12 +206,6 @@ function calculateDashboard(rows: DashboardRow[]): ProjectDashboardData {
     (row) => needsSupport(row.dispositivo_internet) || needsSupport(row.usa_apps_digitales) || needsSupport(row.dificultad_tecnologia),
   ).length
 
-  const score = (keys: (keyof DashboardRow)[]) => {
-    const values = rows.flatMap((row) => keys.map((key) => answerScore(key, row[key])).filter((value): value is number => value !== null))
-    if (!values.length) return 0
-    return Math.round(values.reduce((acc, value) => acc + value, 0) / values.length)
-  }
-
   return {
     ...fallbackProjectDashboardData,
     validacion: {
@@ -260,11 +221,11 @@ function calculateDashboard(rows: DashboardRow[]): ProjectDashboardData {
       { necesidad: "Redes de apoyo", valor: percent(redesApoyo, total) },
     ].sort((a, b) => b.valor - a.valor),
     competencias: [
-      { competencia: "Financiera", valor: score(["ingreso_mensual", "control_dinero", "reinvierte_ganancias", "define_precios_costos"]) },
-      { competencia: "Digital", valor: score(["dispositivo_internet", "usa_apps_digitales", "usa_pagos_digitales", "dificultad_tecnologia"]) },
-      { competencia: "Comercial", valor: score(["promocion_negocio", "usa_sugerencias_clientes"]) },
-      { competencia: "Innovación", valor: score(["etnia", "incorpora_cultura", "origen_conocimiento_cultural", "participa_asociaciones"]) },
-      { competencia: "Gestión", valor: score(["parroquia", "sector_ubicacion", "antiguedad_emprendimiento", "sector_economico", "nivel_instruccion", "situacion_formalizacion", "planifica_metas", "interes_programa", "modalidad_preferida"]) },
+      { competencia: "Financiera", valor: averageScore(["ingreso_mensual", "control_dinero", "reinvierte_ganancias", "define_precios_costos"]) },
+      { competencia: "Digital", valor: averageScore(["dispositivo_internet", "usa_apps_digitales", "usa_pagos_digitales", "dificultad_tecnologia"]) },
+      { competencia: "Comercial", valor: averageScore(["promocion_negocio", "usa_sugerencias_clientes"]) },
+      { competencia: "Innovación", valor: averageScore(["etnia", "incorpora_cultura", "origen_conocimiento_cultural", "participa_asociaciones"]) },
+      { competencia: "Gestión", valor: averageScore(["parroquia", "sector_ubicacion", "antiguedad_emprendimiento", "sector_economico", "nivel_instruccion", "situacion_formalizacion", "planifica_metas", "interes_programa", "modalidad_preferida"]) },
     ],
     diagnostico: {
       respuestas: total,
@@ -475,30 +436,6 @@ export async function getProjectDashboardData(): Promise<ProjectDashboardData> {
     })),
     ...scientificRawActivities,
   ])
-
-  if (rows.length === 0) {
-    return {
-      ...fallbackProjectDashboardData,
-      periodo: formatPeriodo(projectInfo.fechaInicio, projectInfo.fechaFin),
-      cursos: courseStats,
-      produccion: production.resumen,
-      produccionPorInvestigador: production.investigadores,
-      tiempo: progressTimeline.tiempo,
-      actividades: upcomingActivities.slice(0, 5),
-      validacion: {
-        encuestadas: csvCount,
-        meta: projectInfo.metaValidacion,
-        porcentaje: projectInfo.metaValidacion ? Math.min(100, Math.round((csvCount / projectInfo.metaValidacion) * 100)) : 0,
-      },
-      proyecto: {
-        ...fallbackProjectDashboardData.proyecto,
-        avance: progressTimeline.avance,
-        inicio: projectInfo.fechaInicio,
-        fin: projectInfo.fechaFin,
-        tiempoTranscurrido: projectInfo.porcentajeTranscurrido,
-      },
-    }
-  }
 
   const dashboard = calculateDashboard(rows)
   return {
