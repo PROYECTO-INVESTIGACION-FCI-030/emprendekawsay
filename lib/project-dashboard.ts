@@ -165,6 +165,44 @@ function topItems(rows: DashboardRow[], key: keyof DashboardRow, limit = 5) {
 
 function calculateDashboard(rows: DashboardRow[]): ProjectDashboardData {
   const total = rows.length
+  const emptySurveyMetrics = {
+    necesidades: [
+      { necesidad: "Marketing digital", valor: 0 },
+      { necesidad: "Uso de tecnología", valor: 0 },
+      { necesidad: "Educación financiera", valor: 0 },
+      { necesidad: "Formalización", valor: 0 },
+      { necesidad: "Redes de apoyo", valor: 0 },
+    ],
+    competencias: [
+      { competencia: "Financiera", valor: 0 },
+      { competencia: "Digital", valor: 0 },
+      { competencia: "Comercial", valor: 0 },
+      { competencia: "Innovación", valor: 0 },
+      { competencia: "Gestión", valor: 0 },
+    ],
+    diagnostico: {
+      respuestas: 0,
+      formalizacion: 0,
+      interesParticipacion: 0,
+      usoDigital: 0,
+      parroquias: [],
+      sectores: [],
+      etnias: [],
+      modalidades: [],
+    },
+  }
+
+  if (total === 0) {
+    return {
+      ...fallbackProjectDashboardData,
+      validacion: {
+        encuestadas: 0,
+        meta: fallbackProjectDashboardData.validacion.meta,
+        porcentaje: 0,
+      },
+      ...emptySurveyMetrics,
+    }
+  }
 
   const marketingDigital = rows.filter((row) => {
     const promocion = firstValue(row, ["promocion_negocio", "promociona_negocio"])
