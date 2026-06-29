@@ -5,18 +5,33 @@
 CREATE TABLE IF NOT EXISTS public.configuracion_proyecto (
   id SMALLINT PRIMARY KEY DEFAULT 1,
   nombre TEXT NOT NULL DEFAULT 'Proyecto FCI 2025',
-  descripcion TEXT NOT NULL DEFAULT 'Programa de formación y apoyo técnico para el emprendimiento de mujeres indígenas residentes en Guayaquil',
+  descripcion TEXT NOT NULL DEFAULT 'Programa de formacion y apoyo tecnico para el emprendimiento de mujeres indigenas residentes en Guayaquil',
   fecha_inicio DATE NOT NULL,
   fecha_fin DATE NOT NULL,
-  meta_validacion INTEGER NOT NULL DEFAULT 60,
   fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT configuracion_proyecto_singleton CHECK (id = 1),
   CONSTRAINT configuracion_proyecto_fechas_validas CHECK (fecha_fin >= fecha_inicio)
 );
 
-INSERT INTO public.configuracion_proyecto (id, fecha_inicio, fecha_fin, meta_validacion)
-VALUES (1, DATE '2026-06-01', DATE '2028-06-30', 60)
-ON CONFLICT (id) DO NOTHING;
+ALTER TABLE public.configuracion_proyecto
+  ADD COLUMN IF NOT EXISTS meta_validacion INTEGER NOT NULL DEFAULT 60;
+
+INSERT INTO public.configuracion_proyecto (id, nombre, descripcion, fecha_inicio, fecha_fin, meta_validacion)
+VALUES (
+  1,
+  'Proyecto FCI 2025',
+  'Programa de formacion y apoyo tecnico para el emprendimiento de mujeres indigenas residentes en Guayaquil',
+  DATE '2026-06-01',
+  DATE '2028-06-30',
+  60
+)
+ON CONFLICT (id) DO UPDATE SET
+  nombre = EXCLUDED.nombre,
+  descripcion = EXCLUDED.descripcion,
+  fecha_inicio = EXCLUDED.fecha_inicio,
+  fecha_fin = EXCLUDED.fecha_fin,
+  meta_validacion = EXCLUDED.meta_validacion,
+  fecha_actualizacion = now();
 
 ALTER TABLE public.configuracion_proyecto ENABLE ROW LEVEL SECURITY;
 

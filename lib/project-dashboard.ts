@@ -3,7 +3,7 @@ import { getActividadesProyecto } from "@/lib/actividades-proyecto"
 import { getCursos, type Curso } from "@/lib/cursos"
 import { getProjectInfo } from "@/lib/project-info"
 import { getProductionDashboardData } from "@/lib/scientific-production"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 type DashboardRow = {
   fuente: "csv" | "encuesta"
@@ -330,11 +330,11 @@ function formatPeriodo(inicio: string, fin: string) {
 }
 
 async function getCsvRows() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("cuestionario_limpio_respuestas")
     .select(
-      "ubicacion, parroquia, sector_ubicacion, antiguedad_emprendimiento, sector_economico, ingreso_mensual, nivel_instruccion, etnia, situacion_formalizacion, control_dinero, planifica_metas, reinvierte_ganancias, define_precios_costos, promocion_negocio, usa_sugerencias_clientes, dispositivo_internet, usa_apps_digitales, usa_pagos_digitales, dificultad_tecnologia, incorpora_cultura, origen_conocimiento_cultural, participa_asociaciones, interes_programa, modalidad_preferida",
+      "parroquia, sector_ubicacion, antiguedad_emprendimiento, sector_economico, ingreso_mensual, nivel_instruccion, etnia, situacion_formalizacion, control_dinero, planifica_metas, reinvierte_ganancias, define_precios_costos, promocion_negocio, usa_sugerencias_clientes, dispositivo_internet, dispositivos_usados, usa_apps_digitales, apps_usadas, usa_pagos_digitales, pagos_usados, dificultad_tecnologia, incorpora_cultura, elementos_culturales, origen_conocimiento_cultural, participa_asociaciones, interes_programa, modalidad_preferida",
     )
     .limit(5000)
 
@@ -343,7 +343,7 @@ async function getCsvRows() {
 }
 
 async function getCsvCount() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { count } = await supabase.from("cuestionario_limpio_respuestas").select("id", { count: "exact", head: true })
   return count ?? 0
 }
