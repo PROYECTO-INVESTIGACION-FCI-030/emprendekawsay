@@ -11,9 +11,11 @@ import { cn } from "@/lib/utils"
 export function AiCoursePredictor({
   predictions,
   profile,
+  source,
 }: {
   predictions: CoursePrediction[]
   profile: CoursePredictionProfile
+  source: "gemini" | "fallback"
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -70,7 +72,14 @@ export function AiCoursePredictor({
           </div>
           <div className="flex items-center gap-3 rounded-md border border-white/20 bg-white/10 px-4 py-3">
             <Database className="h-5 w-5 text-cyan-200" />
-            <div><p className="text-xl font-semibold">{responseCount}</p><p className="text-xs text-blue-100">respuestas analizadas</p></div>
+            <div>
+              <p className="text-xl font-semibold">{responseCount}</p>
+              <p className="text-xs text-blue-100">respuestas analizadas</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 self-start rounded-full border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold text-white">
+            <span className={cn("h-2.5 w-2.5 rounded-full", source === "gemini" ? "bg-emerald-300" : "bg-amber-300")} />
+            {source === "gemini" ? "Gemini activo" : "Fallback activo"}
           </div>
         </div>
       </section>

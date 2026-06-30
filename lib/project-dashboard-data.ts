@@ -85,11 +85,11 @@ export const fallbackProjectDashboardData: ProjectDashboardData = {
     { investigador: "Nallan Navas", planificado: 3, ejecutado: 3 },
   ],
   necesidades: [
-    { necesidad: "Marketing digital", valor: 100 },
-    { necesidad: "Uso de tecnología", valor: 62 },
-    { necesidad: "Educación financiera", valor: 47 },
-    { necesidad: "Formalización", valor: 24 },
-    { necesidad: "Gestión de costos", valor: 17 },
+    { necesidad: "Marketing digital", valor: 0 },
+    { necesidad: "Uso de tecnología", valor: 0 },
+    { necesidad: "Educación financiera", valor: 0 },
+    { necesidad: "Formalización", valor: 0 },
+    { necesidad: "Redes de apoyo", valor: 0 },
   ],
   competencias: [
     { competencia: "Digital", valor: 9 },

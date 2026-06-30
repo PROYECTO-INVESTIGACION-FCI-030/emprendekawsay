@@ -36,6 +36,7 @@ export type CoursePredictionProfile = {
 export type CoursePredictionResult = {
   cursos: CoursePrediction[]
   perfil: CoursePredictionProfile
+  source: "gemini" | "fallback"
 }
 
 type SurveyRow = Record<string, string | null>
@@ -47,6 +48,14 @@ type Template = {
   titulo: string
   descripcion: string
   score: (row: SurveyRow) => number
+}
+
+type GeminiCourseSuggestion = {
+  numeroBloque: number
+  bloque: string
+  titulo: string
+  descripcion: string
+  brecha?: number
 }
 
 function normalize(value: string | null | undefined) {
@@ -122,137 +131,182 @@ function getModalidadTopLabel(rows: SurveyRow[]) {
   return rawTop ?? "Sin dato"
 }
 
+function buildCriticalNeedSummary(rows: SurveyRow[]) {
+  const total = rows.length || 1
+  const countNeed = (check: (row: SurveyRow) => boolean) => percentage(countRows(rows, check), total)
+
+  const marketingDigital = countNeed(
+    (row) => isWeak(row.promocion_negocio) || isWeak(row.usa_apps_digitales) || isWeak(row.dispositivo_internet) || isWeak(row.apps_usadas),
+  )
+  const pagosDigitales = countNeed((row) => isWeak(row.usa_pagos_digitales) || isWeak(row.pagos_usados) || isWeak(row.dificultad_tecnologia))
+  const herramientasBasicas = countNeed((row) => isWeak(row.dispositivo_internet) || isWeak(row.usa_apps_digitales) || isWeak(row.apps_usadas))
+  const finanzas = countNeed((row) => isWeak(row.control_dinero) || isWeak(row.define_precios_costos) || isWeak(row.reinvierte_ganancias))
+  const formalizacion = countNeed((row) => isWeak(row.situacion_formalizacion))
+  const servicio = countNeed((row) => isWeak(row.usa_sugerencias_clientes) || isWeak(row.promocion_negocio))
+
+  return {
+    totalRespuestas: rows.length,
+    necesidadesCriticas: [
+      { nombre: "Marketing digital", valor: marketingDigital },
+      { nombre: "Pagos digitales y banca móvil", valor: pagosDigitales },
+      { nombre: "Herramientas digitales básicas", valor: herramientasBasicas },
+      { nombre: "Control financiero y precios", valor: finanzas },
+      { nombre: "Formalización del emprendimiento", valor: formalizacion },
+      { nombre: "Atención al cliente y ventas", valor: servicio },
+    ]
+      .filter((item) => item.valor > 0)
+      .sort((a, b) => b.valor - a.valor),
+    perfil: {
+      parroquia: getTopLabel(countBy(rows, "parroquia")),
+      sectorEconomico: getTopLabel(countBy(rows, "sector_economico")),
+      ingresoMensual: getTopLabel(countBy(rows, "ingreso_mensual")),
+      nivelInstruccion: getTopLabel(countBy(rows, "nivel_instruccion")),
+      modalidadPreferida: getModalidadTopLabel(rows),
+      etnia: getTopLabel(countBy(rows, "etnia")),
+      antiguedad: getTopLabel(countBy(rows, "antiguedad_emprendimiento")),
+    },
+  }
+}
+
+function normalizeGeminiSuggestions(value: unknown): GeminiCourseSuggestion[] {
+  if (!Array.isArray(value)) return []
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null
+      const candidate = item as Partial<GeminiCourseSuggestion>
+      const numeroBloque = Number(candidate.numeroBloque)
+      const bloque = typeof candidate.bloque === "string" ? candidate.bloque.trim() : ""
+      const titulo = typeof candidate.titulo === "string" ? candidate.titulo.trim() : ""
+      const descripcion = typeof candidate.descripcion === "string" ? candidate.descripcion.trim() : ""
+      const brecha = Number(candidate.brecha ?? 0)
+      if (!numeroBloque || !bloque || !titulo || !descripcion) return null
+      return {
+        numeroBloque,
+        bloque,
+        titulo,
+        descripcion,
+        brecha: Number.isFinite(brecha) ? Math.max(0, Math.min(100, brecha)) : undefined,
+      }
+    })
+    .filter(Boolean) as GeminiCourseSuggestion[]
+}
+
+async function getGeminiSuggestions(rows: SurveyRow[]) {
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) return []
+
+  const summary = buildCriticalNeedSummary(rows)
+  const prompt = [
+    "Eres un analista académico especializado en formación para mujeres emprendedoras indígenas.",
+    "Con base en estas necesidades críticas y perfil de la muestra, propone exactamente 6 cursos específicos.",
+    "Los cursos deben ser concretos, útiles y enfocados en necesidades reales. Evita títulos genéricos.",
+    "Prioriza especialmente: marketing digital, redes sociales, pagos digitales, banca móvil, herramientas digitales básicas, control financiero, precios y formalización.",
+    "Devuelve SOLO JSON válido con esta estructura:",
+    '[{"numeroBloque":3,"bloque":"Bloque 3: Marketing y tecnología del negocio","titulo":"...","descripcion":"...","brecha":85}]',
+    "La suma total debe incluir 6 cursos, ordenados del mayor al menor impacto.",
+    `Perfil: ${JSON.stringify(summary.perfil)}`,
+    `Necesidades críticas: ${JSON.stringify(summary.necesidadesCriticas)}`,
+  ].join("\n")
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.3,
+          responseMimeType: "application/json",
+        },
+      }),
+    })
+
+    if (!response.ok) return []
+
+    const payload = await response.json()
+    const text = payload?.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text ?? "").join("") ?? ""
+    if (!text) return []
+
+    const parsed = JSON.parse(text)
+    return normalizeGeminiSuggestions(parsed)
+  } catch {
+    return []
+  }
+}
+
 const templates: Template[] = [
   {
-    id: "b1-mercado",
-    numeroBloque: 1,
-    bloque: "Bloque 1: Datos base del emprendimiento",
-    titulo: "Modelo de negocio y clientela objetivo",
-    descripcion: "Define a quién vende, qué ofrece y cómo organiza su negocio para crecer con claridad.",
+    id: "mkt-redes",
+    numeroBloque: 3,
+    bloque: "Bloque 3: Marketing y tecnología del negocio",
+    titulo: "Marketing digital y redes sociales",
+    descripcion: "Fortalece la promoción del negocio en Facebook, Instagram y WhatsApp para atraer más clientes.",
     score: (row) =>
       valuePriority(
-        [row.parroquia, row.sector_economico, row.ingreso_mensual, row.nivel_instruccion].filter(isWeak).length,
-        [row.parroquia, row.sector_economico, row.ingreso_mensual, row.nivel_instruccion].filter(positive).length,
+        [row.promocion_negocio, row.usa_apps_digitales, row.dispositivo_internet, row.apps_usadas, row.usa_sugerencias_clientes].filter(
+          isWeak,
+        ).length * 2,
+        [row.promocion_negocio, row.usa_apps_digitales, row.dispositivo_internet, row.apps_usadas].filter(positive).length,
       ),
   },
   {
-    id: "b1-crecimiento",
-    numeroBloque: 1,
-    bloque: "Bloque 1: Datos base del emprendimiento",
-    titulo: "Plan de crecimiento y metas del emprendimiento",
-    descripcion: "Trabaja objetivos, prioridades y pasos concretos para ordenar el avance del negocio.",
+    id: "dig-herramientas",
+    numeroBloque: 3,
+    bloque: "Bloque 3: Marketing y tecnología del negocio",
+    titulo: "Manejo de aplicaciones y herramientas digitales básicas",
+    descripcion: "Uso práctico del celular, aplicaciones y herramientas simples para organizar pedidos y comunicación.",
     score: (row) =>
       valuePriority(
-        [row.antiguedad_emprendimiento, row.interes_programa].filter(isWeak).length,
-        [row.interes_programa].filter(positive).length,
+        [row.dispositivo_internet, row.usa_apps_digitales, row.apps_usadas, row.dificultad_tecnologia].filter(isWeak).length * 2,
+        [row.dispositivo_internet, row.usa_apps_digitales, row.apps_usadas].filter(positive).length,
       ),
   },
   {
-    id: "b2-control",
+    id: "pay-banca",
+    numeroBloque: 3,
+    bloque: "Bloque 3: Marketing y tecnología del negocio",
+    titulo: "Pagos digitales y banca móvil",
+    descripcion: "Aprende a cobrar y pagar con transferencias, QR, banca móvil y herramientas financieras digitales.",
+    score: (row) =>
+      valuePriority(
+        [row.usa_pagos_digitales, row.pagos_usados, row.dificultad_tecnologia].filter(isWeak).length * 2,
+        [row.usa_pagos_digitales, row.pagos_usados].filter(positive).length,
+      ),
+  },
+  {
+    id: "finanzas-costos",
     numeroBloque: 2,
     bloque: "Bloque 2: Gestión y finanzas",
-    titulo: "Control de ingresos, gastos y flujo de caja",
-    descripcion: "Aprende a registrar dinero, separar gastos y entender qué deja realmente tu negocio.",
+    titulo: "Control financiero, costos y fijación de precios",
+    descripcion: "Organiza ingresos, gastos, reinversión y precios de venta para entender la rentabilidad real.",
     score: (row) =>
       valuePriority(
-        [row.control_dinero, row.planifica_metas, row.reinvierte_ganancias].filter(isWeak).length,
-        [row.control_dinero, row.planifica_metas, row.reinvierte_ganancias].filter(positive).length,
+        [row.control_dinero, row.reinvierte_ganancias, row.define_precios_costos].filter(isWeak).length * 2,
+        [row.control_dinero, row.reinvierte_ganancias, row.define_precios_costos].filter(positive).length,
       ),
   },
   {
-    id: "b2-precios",
+    id: "formalizacion",
     numeroBloque: 2,
     bloque: "Bloque 2: Gestión y finanzas",
-    titulo: "Costos, precios y formalización básica",
-    descripcion: "Refuerza el cálculo de precios, costos y pasos básicos para ordenar la formalización.",
+    titulo: "Formalización del emprendimiento y trámites básicos",
+    descripcion: "Revisa permisos, RUC y pasos prácticos para ordenar el negocio y avanzar con seguridad.",
     score: (row) =>
       valuePriority(
-        [row.situacion_formalizacion, row.define_precios_costos].filter(isWeak).length,
-        [row.situacion_formalizacion, row.define_precios_costos].filter(positive).length,
+        [row.situacion_formalizacion, row.parroquia, row.sector_economico].filter(isWeak).length * 2,
+        [row.situacion_formalizacion].filter(positive).length,
       ),
   },
   {
-    id: "b3-whatsapp",
-    numeroBloque: 3,
-    bloque: "Bloque 3: Marketing y tecnología del negocio",
-    titulo: "Uso de WhatsApp Business y catálogo digital",
-    descripcion: "Organiza productos, respuestas rápidas y pedidos desde el celular para vender mejor.",
+    id: "clientes-ventas",
+    numeroBloque: 1,
+    bloque: "Bloque 1: Datos base del emprendimiento",
+    titulo: "Gestión de clientas y mejoras del servicio",
+    descripcion: "Aprende a usar sugerencias, mejorar la atención y convertir más interés en ventas.",
     score: (row) =>
       valuePriority(
-        [row.dispositivo_internet, row.usa_apps_digitales].filter(isWeak).length,
-        [row.dispositivo_internet, row.usa_apps_digitales].filter(positive).length,
-      ),
-  },
-  {
-    id: "b3-redes",
-    numeroBloque: 3,
-    bloque: "Bloque 3: Marketing y tecnología del negocio",
-    titulo: "Promoción digital para microemprendimientos",
-    descripcion: "Crea publicaciones, promociones y mensajes claros para atraer más clientas.",
-    score: (row) =>
-      valuePriority(
-        [row.promocion_negocio, row.usa_sugerencias_clientes].filter(isWeak).length,
-        [row.promocion_negocio, row.usa_sugerencias_clientes].filter(positive).length,
-      ),
-  },
-  {
-    id: "b3-pagos",
-    numeroBloque: 3,
-    bloque: "Bloque 3: Marketing y tecnología del negocio",
-    titulo: "Pagos digitales y cobros seguros",
-    descripcion: "Practica transferencias, cobros QR y herramientas digitales para vender con confianza.",
-    score: (row) =>
-      valuePriority(
-        [row.usa_pagos_digitales, row.dificultad_tecnologia].filter(isWeak).length,
-        [row.usa_pagos_digitales].filter(positive).length,
-      ),
-  },
-  {
-    id: "b4-identidad",
-    numeroBloque: 4,
-    bloque: "Bloque 4: Cultura e identidad del negocio",
-    titulo: "Identidad cultural aplicada a productos y marca",
-    descripcion: "Convierte la cultura en una propuesta diferenciada y coherente con tu negocio.",
-    score: (row) =>
-      valuePriority(
-        [row.incorpora_cultura, row.origen_conocimiento_cultural].filter(isWeak).length,
-        [row.incorpora_cultura, row.origen_conocimiento_cultural].filter(positive).length,
-      ),
-  },
-  {
-    id: "b4-redes",
-    numeroBloque: 4,
-    bloque: "Bloque 4: Cultura e identidad del negocio",
-    titulo: "Redes comunitarias y comercialización colectiva",
-    descripcion: "Fortalece alianzas, grupos y ferias para vender en conjunto y ampliar oportunidades.",
-    score: (row) =>
-      valuePriority(
-        [row.participa_asociaciones].filter(isWeak).length,
-        [row.participa_asociaciones].filter(positive).length,
-      ),
-  },
-  {
-    id: "b5-ruta",
-    numeroBloque: 5,
-    bloque: "Bloque 5: General",
-    titulo: "Ruta flexible de aprendizaje emprendedor",
-    descripcion: "Organiza horarios, ritmo y modalidad para que la formación se adapte a la realidad de la emprendedora.",
-    score: (row) =>
-      valuePriority(
-        [row.interes_programa, row.modalidad_preferida].filter(isWeak).length,
-        [row.interes_programa, row.modalidad_preferida].filter(positive).length,
-      ),
-  },
-  {
-    id: "b5-autonomia",
-    numeroBloque: 5,
-    bloque: "Bloque 5: General",
-    titulo: "Autonomía y constancia para sostener el negocio",
-    descripcion: "Refuerza hábitos, seguimiento y apoyo continuo para sostener el proceso formativo.",
-    score: (row) =>
-      valuePriority(
-        [row.interes_programa].filter(isWeak).length,
-        [row.interes_programa].filter(positive).length,
+        [row.usa_sugerencias_clientes, row.promocion_negocio].filter(isWeak).length * 2,
+        [row.usa_sugerencias_clientes].filter(positive).length,
       ),
   },
 ]
@@ -262,7 +316,7 @@ export async function getCoursePredictions(): Promise<CoursePredictionResult> {
   const { data, error, count } = await supabase
     .from("cuestionario_limpio_respuestas")
     .select(
-      "antiguedad_emprendimiento, ingreso_mensual, nivel_instruccion, etnia, situacion_formalizacion, control_dinero, planifica_metas, reinvierte_ganancias, define_precios_costos, promocion_negocio, usa_sugerencias_clientes, dispositivo_internet, usa_apps_digitales, usa_pagos_digitales, dificultad_tecnologia, incorpora_cultura, origen_conocimiento_cultural, participa_asociaciones, interes_programa, modalidad_preferida, sector_economico",
+      "antiguedad_emprendimiento, ingreso_mensual, nivel_instruccion, etnia, situacion_formalizacion, control_dinero, planifica_metas, reinvierte_ganancias, define_precios_costos, promocion_negocio, usa_sugerencias_clientes, dispositivo_internet, usa_apps_digitales, usa_pagos_digitales, dificultad_tecnologia, incorpora_cultura, origen_conocimiento_cultural, participa_asociaciones, interes_programa, modalidad_preferida, sector_economico, apps_usadas, pagos_usados",
       { count: "exact" },
     )
     .limit(5000)
@@ -297,6 +351,7 @@ export async function getCoursePredictions(): Promise<CoursePredictionResult> {
           antiguedad: [],
         },
       },
+      source: "fallback",
     }
   }
 
@@ -315,21 +370,30 @@ export async function getCoursePredictions(): Promise<CoursePredictionResult> {
     } satisfies CoursePrediction
   })
 
-  const grouped = new Map<number, CoursePrediction[]>()
-  for (const item of byTemplate) {
-    const current = grouped.get(item.numeroBloque) ?? []
-    current.push(item)
-    grouped.set(item.numeroBloque, current)
-  }
+  const geminiSuggestions = await getGeminiSuggestions(rows)
+  const source: "gemini" | "fallback" = geminiSuggestions.length ? "gemini" : "fallback"
+  const suggested = (geminiSuggestions.length ? geminiSuggestions : [])
+    .map((item, index) => {
+      const fallback = byTemplate[index] ?? byTemplate[0]
+      if (!fallback) return null
+      return {
+        id: fallback.id,
+        bloque: item.bloque || fallback.bloque,
+        numeroBloque: item.numeroBloque || fallback.numeroBloque,
+        titulo: item.titulo || fallback.titulo,
+        descripcion: item.descripcion || fallback.descripcion,
+        brecha: item.brecha ?? fallback.brecha,
+        respuestas: total,
+      } satisfies CoursePrediction
+    })
+    .filter(Boolean) as CoursePrediction[]
 
-  const result: CoursePrediction[] = []
-  for (const block of [...grouped.keys()].sort((a, b) => a - b)) {
-    const blockItems = (grouped.get(block) ?? []).sort((a, b) => {
+  const result = (suggested.length ? suggested : byTemplate)
+    .sort((a, b) => {
       if (b.brecha !== a.brecha) return b.brecha - a.brecha
+      if (a.numeroBloque !== b.numeroBloque) return a.numeroBloque - b.numeroBloque
       return a.titulo.localeCompare(b.titulo)
     })
-    result.push(...blockItems.slice(0, 3))
-  }
 
   const perfil: CoursePredictionProfile = {
     totalRegistros: total,
@@ -337,27 +401,27 @@ export async function getCoursePredictions(): Promise<CoursePredictionResult> {
       {
         etiqueta: "Parroquia predominante",
         valor: getTopLabel(countBy(rows, "parroquia")),
-        detalle: "Ubicacion con mayor presencia dentro de la muestra.",
+        detalle: "Ubicación con mayor presencia dentro de la muestra.",
       },
       {
         etiqueta: "Sector predominante",
         valor: getTopLabel(countBy(rows, "sector_economico")),
-        detalle: "Actividad economica con mayor presencia en la base.",
+        detalle: "Actividad económica con mayor presencia en la base.",
       },
       {
         etiqueta: "Ingreso mensual predominante",
         valor: getTopLabel(countBy(rows, "ingreso_mensual")),
-        detalle: "Rango de ingreso que mas se repite en las respuestas.",
+        detalle: "Rango de ingreso que más se repite en las respuestas.",
       },
       {
         etiqueta: "Nivel predominante",
         valor: getTopLabel(countBy(rows, "nivel_instruccion")),
-        detalle: "Distribucion de instruccion formal en la muestra.",
+        detalle: "Distribución de instrucción formal en la muestra.",
       },
       {
         etiqueta: "Modalidad más frecuente",
         valor: getModalidadTopLabel(rows),
-        detalle: "Canal de formacion con mayor demanda declarada.",
+        detalle: "Canal de formación con mayor demanda declarada.",
       },
     ],
     segmentos: {
@@ -372,11 +436,8 @@ export async function getCoursePredictions(): Promise<CoursePredictionResult> {
   }
 
   return {
-    cursos: result.sort((a, b) => {
-    if (b.brecha !== a.brecha) return b.brecha - a.brecha
-    if (a.numeroBloque !== b.numeroBloque) return a.numeroBloque - b.numeroBloque
-    return a.titulo.localeCompare(b.titulo)
-    }),
+    cursos: result.slice(0, 6),
     perfil,
+    source,
   }
 }

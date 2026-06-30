@@ -173,18 +173,19 @@ function calculateDashboard(rows: DashboardRow[]): ProjectDashboardData {
 
   const marketingDigital = rows.filter((row) => {
     const promocion = firstValue(row, ["promocion_negocio", "promociona_negocio"])
-    return includesAny(promocion, ["solo espero"]) || needsSupport(row.usa_apps_digitales)
+    return includesAny(promocion, ["solo espero"]) || needsSupport(row.usa_apps_digitales) || needsSupport(row.apps_usadas)
   }).length
 
   const usoTecnologia = rows.filter(
-    (row) => needsSupport(row.dispositivo_internet) || needsSupport(row.dificultad_tecnologia),
+    (row) => needsSupport(row.dispositivo_internet) || needsSupport(row.dificultad_tecnologia) || needsSupport(row.usa_pagos_digitales),
   ).length
 
   const educacionFinanciera = rows.filter(
     (row) =>
       needsSupport(firstValue(row, ["control_dinero", "registra_compras_ventas"])) ||
       needsSupport(row.define_precios_costos) ||
-      needsSupport(row.reinvierte_ganancias),
+      needsSupport(row.reinvierte_ganancias) ||
+      needsSupport(row.ingreso_mensual),
   ).length
 
   const formalizacion = rows.filter(
@@ -197,7 +198,8 @@ function calculateDashboard(rows: DashboardRow[]): ProjectDashboardData {
   const redesApoyo = rows.filter(
     (row) =>
       needsSupport(firstValue(row, ["participa_asociaciones", "participa_redes"])) ||
-      needsSupport(row.participa_capacitaciones),
+      needsSupport(row.participa_capacitaciones) ||
+      needsSupport(row.modalidad_preferida),
   ).length
 
   const formalizadas = rows.filter((row) => !needsSupport(firstValue(row, ["situacion_formalizacion", "tiene_ruc_permisos"])) ).length
@@ -219,7 +221,9 @@ function calculateDashboard(rows: DashboardRow[]): ProjectDashboardData {
       { necesidad: "Educación financiera", valor: percent(educacionFinanciera, total) },
       { necesidad: "Formalización", valor: percent(formalizacion, total) },
       { necesidad: "Redes de apoyo", valor: percent(redesApoyo, total) },
-    ].sort((a, b) => b.valor - a.valor),
+    ]
+      .filter((item) => item.valor > 0)
+      .sort((a, b) => b.valor - a.valor),
     competencias: [
       { competencia: "Financiera", valor: averageScore(["ingreso_mensual", "control_dinero", "reinvierte_ganancias", "define_precios_costos"]) },
       { competencia: "Digital", valor: averageScore(["dispositivo_internet", "usa_apps_digitales", "usa_pagos_digitales", "dificultad_tecnologia"]) },
