@@ -140,6 +140,16 @@ export function CleanDiagnosticForm() {
   const [answers, setAnswers] = useState<Answers>({})
   const [multi, setMulti] = useState<Record<string, string[]>>({})
   const [stepIndex, setStepIndex] = useState(0)
+  const [completed, setCompleted] = useState(false)
+  const [submitRequested, setSubmitRequested] = useState(false)
+  const serializedAnswers = useMemo(() => JSON.stringify(answers), [answers])
+  const serializedMulti = useMemo(() => JSON.stringify(multi), [multi])
+
+  useEffect(() => {
+    if (state?.ok && submitRequested) {
+      setCompleted(true)
+    }
+  }, [state?.ok, submitRequested])
 
   function setAnswer(name: string, value: string) {
     setAnswers((current) => ({ ...current, [name]: value }))
@@ -248,8 +258,34 @@ export function CleanDiagnosticForm() {
     setStepIndex((current) => Math.max(current - 1, 0))
   }
 
+  if (completed) {
+    return (
+      <Card className="overflow-hidden border-slate-200 shadow-sm">
+        <div className="h-2 bg-[#00529b]" />
+        <CardContent className="flex flex-col items-center justify-center gap-4 px-6 py-14 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#e8f1fb] text-2xl text-[#00529b]">
+            ✓
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#00529b]">Encuesta finalizada</p>
+            <h2 className="text-2xl font-semibold text-slate-950">Gracias por completar el cuestionario</h2>
+            <p className="max-w-2xl text-sm leading-6 text-slate-600">
+              Tus respuestas fueron enviadas correctamente. Esta encuesta ya quedó cerrada en este dispositivo y no se
+              puede modificar nuevamente.
+            </p>
+          </div>
+          <div className="rounded-md border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600">
+            Puedes cerrar esta pestaña con tranquilidad.
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
-    <form action={action} className="space-y-6">
+    <form action={action} noValidate className="space-y-6">
+      <input type="hidden" name="answers_json" value={serializedAnswers} />
+      <input type="hidden" name="multi_json" value={serializedMulti} />
       <Card className="border-slate-200 shadow-sm">
         <CardContent className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50 px-6 py-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -356,7 +392,7 @@ export function CleanDiagnosticForm() {
           <CardContent className="flex flex-col gap-4">
             <SelectField name="interes_programa" label="22. ¿Le gustaría participar en el programa de capacitación y formación para emprendedoras?" options={["Sí", "No"]} value={answers.interes_programa ?? ""} onChange={setAnswer} required />
             {showContacto ? <TextField name="contacto_programa" label="Si su respuesta fue sí, proporcione un número de WhatsApp activo o correo electrónico" value={answers.contacto_programa ?? ""} onChange={setAnswer} placeholder="WhatsApp o correo" required /> : null}
-            <SelectField name="modalidad_preferida" label="23. ¿En qué modalidad preferiría recibir las capacitaciones?" options={["Presencial", "Virtual"]} value={answers.modalidad_preferida ?? ""} onChange={setAnswer} required />
+            <SelectField name="modalidad_preferida" label="23. ¿En qué modalidad preferiría recibir las capacitaciones?" options={["Presencial", "Virtual", "Híbrida"]} value={answers.modalidad_preferida ?? ""} onChange={setAnswer} required />
           </CardContent>
         </Card>
       ) : null}
@@ -372,7 +408,7 @@ export function CleanDiagnosticForm() {
               Siguiente
             </Button>
           ) : (
-            <Button type="submit" disabled={pending}>
+            <Button type="submit" onClick={() => setSubmitRequested(true)} disabled={pending}>
               {pending ? "Enviando..." : "Enviar encuesta"}
             </Button>
           )}
