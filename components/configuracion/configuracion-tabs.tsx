@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useActionState, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -282,7 +282,8 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
     setSelectedUser(user)
     setEditNombre(user.nombre_completo ?? "")
     setEditEmail(user.email ?? "")
-    setEditRol(normalizarRol(user.rol))
+    const rolNormalizado = normalizarRol(user.rol)
+    setEditRol(ROLES_EDITABLES.some((rol) => rol.value === rolNormalizado) ? rolNormalizado : "")
     setEditActiva(user.activa)
     setOpenEdit(true)
   }
@@ -413,6 +414,7 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
                 onChange={(e) => setEditRol(e.target.value)}
                 className="mt-1 h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-primary"
               >
+                <option value="">Sin rol</option>
                 {ROLES_EDITABLES.map((rol) => (
                   <option key={rol.value} value={rol.value}>
                     {rol.label}
@@ -434,7 +436,22 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
   )
 }
 
-function HistorialIngresos({ historialIngresos }: { historialIngresos: Array<{ id: string; id_usuario: string; nombre_usuario: string | null; email_usuario: string | null; rol_usuario: string | null; fecha_ingreso: string; ruta: string | null; user_agent: string | null }> }) {
+function HistorialIngresos({
+  historialIngresos,
+}: {
+  historialIngresos: Array<{
+    id: string
+    id_usuario: string
+    nombre_usuario: string | null
+    email_usuario: string | null
+    rol_usuario: string | null
+    fecha_ingreso: string
+    ruta: string | null
+    user_agent: string | null
+    accion?: string | null
+    pagina_nombre?: string | null
+  }>
+}) {
   return (
     <Panel title="Historial de ingresos" description="Últimos accesos registrados al iniciar sesión">
       <div className="overflow-x-auto rounded-md border border-border">
@@ -444,18 +461,30 @@ function HistorialIngresos({ historialIngresos }: { historialIngresos: Array<{ i
               <TableHead>Usuario</TableHead>
               <TableHead>Correo</TableHead>
               <TableHead>Rol</TableHead>
+              <TableHead>Acción</TableHead>
+              <TableHead>Ruta</TableHead>
               <TableHead>Fecha</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {historialIngresos.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.nombre_usuario ?? "—"}</TableCell>
-                <TableCell>{item.email_usuario ?? "—"}</TableCell>
-                <TableCell>{item.rol_usuario ?? "—"}</TableCell>
-                <TableCell>{new Date(item.fecha_ingreso).toLocaleString("es-EC")}</TableCell>
+            {historialIngresos.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
+                  Aún no hay registros en el historial de ingresos.
+                </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              historialIngresos.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.nombre_usuario ?? "—"}</TableCell>
+                  <TableCell>{item.email_usuario ?? "—"}</TableCell>
+                  <TableCell>{item.rol_usuario ?? "—"}</TableCell>
+                  <TableCell>{item.accion ?? "navegacion"}</TableCell>
+                  <TableCell>{item.pagina_nombre ?? item.ruta ?? "—"}</TableCell>
+                  <TableCell>{new Date(item.fecha_ingreso).toLocaleString("es-EC")}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

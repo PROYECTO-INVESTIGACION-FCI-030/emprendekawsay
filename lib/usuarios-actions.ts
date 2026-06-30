@@ -245,6 +245,7 @@ export async function actualizarUsuario(
       return { ok: false, message: "No tienes permiso para cambiar roles o estado de cuenta." }
     }
 
+    const supabaseAdmin = createAdminClient()
     const updateData: Record<string, unknown> = {
       fecha_actualizacion: new Date().toISOString(),
     }
@@ -260,15 +261,14 @@ export async function actualizarUsuario(
     if (data.linkedin !== undefined) updateData.linkedin = data.linkedin
     if (data.activa !== undefined && esAdmin) updateData.cuenta_activa = data.activa
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from("perfiles_usuario")
       .update(updateData)
       .eq("id", userId)
 
     if (updateError) return { ok: false, message: updateError.message }
 
-    if (data.rol !== undefined && esAdmin) {
-      const supabaseAdmin = createAdminClient()
+    if (data.rol !== undefined && esAdmin && data.rol.trim()) {
       const rolError = await asignarRolUsuario(supabaseAdmin, userId, data.rol)
       if (rolError) return { ok: false, message: rolError.message }
     }

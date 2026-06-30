@@ -270,6 +270,36 @@ export async function getCoursePredictions(): Promise<CoursePredictionResult> {
   const rows = error || !data ? [] : (data as SurveyRow[])
   const total = count ?? rows.length
 
+  if (total === 0) {
+    return {
+      cursos: [],
+      perfil: {
+        totalRegistros: 0,
+        perfilGeneral: [
+          {
+            etiqueta: "Sin datos",
+            valor: "No hay respuestas registradas",
+            detalle: "La predicción necesita respuestas reales en cuestionario_limpio_respuestas.",
+          },
+          {
+            etiqueta: "Estado",
+            valor: "Esperando información",
+            detalle: "Cuando lleguen encuestas, aquí se generarán los cursos sugeridos.",
+          },
+        ],
+        segmentos: {
+          parroquia: [],
+          nivelInstruccion: [],
+          sectorEconomico: [],
+          ingresoMensual: [],
+          modalidadPreferida: [],
+          etnia: [],
+          antiguedad: [],
+        },
+      },
+    }
+  }
+
   const byTemplate = templates.map((template) => {
     const scores = rows.map((row) => template.score(row)).filter((score) => Number.isFinite(score))
     const baseScore = scores.length ? Math.round(scores.reduce((acc, value) => acc + value, 0) / scores.length) : 0

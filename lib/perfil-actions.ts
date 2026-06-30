@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { isSupabaseConfigured } from "@/lib/perfil"
 
@@ -24,6 +25,7 @@ export async function actualizarPerfil(
 
   if (!user) return { ok: false, message: "No has iniciado sesión." }
 
+  const admin = createAdminClient()
   const payload = {
     nombre_completo: (formData.get("nombre_completo") as string)?.trim() || null,
     email: (formData.get("email") as string)?.trim() || null,
@@ -34,7 +36,7 @@ export async function actualizarPerfil(
     fecha_actualizacion: new Date().toISOString(),
   }
 
-  const { error } = await supabase
+  const { error } = await admin
     .from("perfiles_usuario")
     .update(payload)
     .eq("id", user.id)
@@ -58,7 +60,8 @@ export async function actualizarNotificaciones(activas: boolean): Promise<Actual
 
   if (!user) return { ok: false, message: "No has iniciado sesión." }
 
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const { error } = await admin
     .from("perfiles_usuario")
     .update({ notificaciones_activas: activas, fecha_actualizacion: new Date().toISOString() })
     .eq("id", user.id)

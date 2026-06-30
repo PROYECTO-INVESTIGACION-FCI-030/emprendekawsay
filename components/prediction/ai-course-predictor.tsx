@@ -22,6 +22,33 @@ export function AiCoursePredictor({
   const blocks = [...new Set(predictions.map((prediction) => prediction.numeroBloque))]
   const responseCount = predictions[0]?.respuestas ?? 0
 
+  if (!predictions.length) {
+    return (
+      <div className="min-h-full bg-[#f4f8fc] pb-10">
+        <section className="border-b-4 border-[#00a6d6] bg-[#00529b] px-6 py-7 text-white">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-medium text-cyan-100">
+                <Bot className="h-5 w-5" />
+                Agente IA de prediccion formativa
+              </div>
+              <h2 className="mt-2 text-2xl font-semibold">Cursos recomendados desde el diagnostico</h2>
+              <p className="mt-2 max-w-3xl text-sm text-blue-100">
+                Todavia no hay respuestas registradas en la encuesta, por eso la IA no puede sugerir cursos reales.
+              </p>
+            </div>
+          </div>
+        </section>
+        <div className="px-4 pt-6 sm:px-6">
+          <div className="rounded-md border border-[#bdd7ea] bg-white px-5 py-8 text-sm text-muted-foreground shadow-sm">
+            Cuando existan respuestas en <span className="font-medium text-[#00529b]">cuestionario_limpio_respuestas</span>, aqui se generaran
+            automaticamente los cursos sugeridos por bloque.
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   function createSelected(block: number) {
     const prediction = predictions.find((item) => item.id === selected[block])
     if (!prediction) return
