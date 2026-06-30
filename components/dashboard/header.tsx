@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Bell, BellOff, CalendarDays, Download, LogOut, Info, CircleCheck, TriangleAlert } from "lucide-react"
+import { Bell, BellOff, Download, LogOut, Info, CircleCheck, TriangleAlert } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { createClient } from "@/lib/supabase/client"
@@ -176,10 +176,7 @@ export function Toolbar({
       </div>
       <div className="flex items-center gap-3">
         {showControls && (
-          <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground">
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
-            <span>01/08/2025 - 30/10/2025</span>
-          </div>
+          null
         )}
         {action}
         {showControls && !action && (

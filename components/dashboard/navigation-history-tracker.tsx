@@ -59,7 +59,11 @@ export function NavigationHistoryTracker() {
       }).catch(() => null)
     }
 
-    registrar().catch(() => null)
+    const timeout = window.setTimeout(() => {
+      registrar().catch(() => null)
+    }, 150)
+
+    return () => window.clearTimeout(timeout)
   }, [pathname, searchParams])
 
   return null

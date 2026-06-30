@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 import type { ProjectInfo } from "@/lib/project-info"
 import { actualizarConfiguracionProyecto } from "@/lib/project-config-actions"
 import { crearUsuario, actualizarUsuario, eliminarUsuario } from "@/lib/usuarios-actions"
+import { normalizarRol } from "@/lib/roles"
 
 const ROLES_EDITABLES = [
   { value: "administradora", label: "Administradora" },
@@ -221,7 +222,7 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
   const [selectedUser, setSelectedUser] = useState<typeof usuarios[0] | null>(null)
   const [newEmail, setNewEmail] = useState("")
   const [newNombre, setNewNombre] = useState("")
-  const [newRol, setNewRol] = useState("investigadora")
+  const [newRol, setNewRol] = useState("")
   const [loading, setLoading] = useState(false)
   const [editNombre, setEditNombre] = useState("")
   const [editEmail, setEditEmail] = useState("")
@@ -243,7 +244,7 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
       setOpenCreate(false)
       setNewEmail("")
       setNewNombre("")
-      setNewRol("investigadora")
+      setNewRol("")
       router.refresh()
     } else {
       alert(`Error: ${res.message}`)
@@ -281,7 +282,7 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
     setSelectedUser(user)
     setEditNombre(user.nombre_completo ?? "")
     setEditEmail(user.email ?? "")
-    setEditRol(user.rol)
+    setEditRol(normalizarRol(user.rol))
     setEditActiva(user.activa)
     setOpenEdit(true)
   }
@@ -368,6 +369,9 @@ function GestionUsuarios({ usuarios, esAdmin }: { usuarios: Array<{ id: string; 
                 onChange={(e) => setNewRol(e.target.value)}
                 className="mt-1 h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-primary"
               >
+                <option value="" disabled>
+                  Selecciona un rol
+                </option>
                 {ROLES_EDITABLES.map((rol) => (
                   <option key={rol.value} value={rol.value}>
                     {rol.label}

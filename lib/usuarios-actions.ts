@@ -151,7 +151,8 @@ export async function crearUsuario(
 
     const supabaseAdmin = createAdminClient()
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://emprendekawsay.vercel.app"
-    const callbackUrl = new URL("/auth/confirm", siteUrl)
+    const callbackUrl = new URL("/auth/callback", siteUrl)
+    callbackUrl.searchParams.set("type", "invite")
     callbackUrl.searchParams.set("next", "/auth/reset-password?invite=true")
     const redirectTo = callbackUrl.toString()
 
