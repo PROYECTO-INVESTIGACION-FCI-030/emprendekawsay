@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useEffect, useMemo, useState } from "react"
+import { type FormEvent, useActionState, useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -142,6 +142,7 @@ export function CleanDiagnosticForm() {
   const [stepIndex, setStepIndex] = useState(0)
   const [completed, setCompleted] = useState(false)
   const [submitRequested, setSubmitRequested] = useState(false)
+  const [warning, setWarning] = useState("")
   const serializedAnswers = useMemo(() => JSON.stringify(answers), [answers])
   const serializedMulti = useMemo(() => JSON.stringify(multi), [multi])
 
@@ -152,10 +153,12 @@ export function CleanDiagnosticForm() {
   }, [state?.ok, submitRequested])
 
   function setAnswer(name: string, value: string) {
+    setWarning("")
     setAnswers((current) => ({ ...current, [name]: value }))
   }
 
   function toggleAnswer(name: string, value: string) {
+    setWarning("")
     setMulti((current) => {
       const currentValues = current[name] ?? []
       const next = currentValues.includes(value)
@@ -245,17 +248,86 @@ export function CleanDiagnosticForm() {
     return true
   }
 
+  function missingMessage(stepId: StepId) {
+    if (stepId === "base") {
+      if (!answers.parroquia) return "Falta responder la pregunta 1."
+      if (showParroquiaOtro && !answers.parroquia_otro) return "Falta especificar la parroquia en la pregunta 1."
+      if (!answers.sector_ubicacion) return "Falta responder la pregunta 2."
+      if (!answers.antiguedad_emprendimiento) return "Falta responder la pregunta 3."
+      if (!answers.sector_economico) return "Falta responder la pregunta 4."
+      if (showSectorOtro && !answers.sector_economico_otro) return "Falta especificar el sector económico en la pregunta 4."
+      if (!answers.ingreso_mensual) return "Falta responder la pregunta 5."
+      if (!answers.nivel_instruccion) return "Falta responder la pregunta 6."
+      if (!answers.etnia) return "Falta responder la pregunta 7."
+      if (showPueblo && !answers.pueblo_nacionalidad) return "Falta especificar el pueblo o nacionalidad en la pregunta 7."
+      if (showEtniaOtro && !answers.autoidentificacion_otro) return "Falta especificar la autoidentificación en la pregunta 7."
+    }
+    if (stepId === "gestion") {
+      if (!answers.situacion_formalizacion) return "Falta responder la pregunta 8."
+      if (!answers.control_dinero) return "Falta responder la pregunta 9."
+      if (!answers.planifica_metas) return "Falta responder la pregunta 10."
+      if (!answers.reinvierte_ganancias) return "Falta responder la pregunta 11."
+      if (!answers.define_precios_costos) return "Falta responder la pregunta 12."
+    }
+    if (stepId === "marketing") {
+      if (!answers.promocion_negocio) return "Falta responder la pregunta 13."
+      if (showPromocion && !(multi.medios_promocion?.length)) return "Falta marcar al menos una opción en la pregunta 13."
+      if (showMediosPromocionOtro && !answers.medios_promocion_otro) return "Falta especificar la opción 'Otro' en la pregunta 13."
+      if (!answers.usa_sugerencias_clients) return "Falta responder la pregunta 14."
+      if (!answers.dispositivo_internet) return "Falta responder la pregunta 15."
+      if (showDispositivos && !(multi.dispositivos_usados?.length)) return "Falta marcar al menos una opción en la pregunta 15."
+      if (showDispositivosOtro && !answers.dispositivos_usados_otro) return "Falta especificar la opción 'Otro' en la pregunta 15."
+      if (showDispositivos && !answers.usa_apps_digitales) return "Falta responder la pregunta 16."
+      if (showApps && !(multi.apps_usadas?.length)) return "Falta marcar al menos una opción en la pregunta 16."
+      if (showAppsOtro && !answers.apps_usadas_otro) return "Falta especificar la opción 'Otro' en la pregunta 16."
+      if (showDispositivos && !answers.usa_pagos_digitales) return "Falta responder la pregunta 17."
+      if (showPagos && !(multi.pagos_usados?.length)) return "Falta marcar al menos una opción en la pregunta 17."
+      if (showPagosOtro && !answers.pagos_usados_otro) return "Falta especificar la opción 'Otro' en la pregunta 17."
+      if (!answers.dificultad_tecnologia) return "Falta responder la pregunta 18."
+      if (showDificultadOtro && !answers.dificultad_tecnologia_otro) return "Falta especificar la opción 'Otro' en la pregunta 18."
+    }
+    if (stepId === "cultura") {
+      if (!answers.incorpora_cultura) return "Falta responder la pregunta 19."
+      if (showCulturaDetalles && !(multi.elementos_culturales?.length)) return "Falta marcar al menos una opción en la pregunta 19."
+      if (showElementosCulturalesOtro && !answers.elementos_culturales_otro) return "Falta especificar la opción 'Otro' en la pregunta 19."
+      if (showCulturaDetalles && !answers.origen_conocimiento_cultural) return "Falta responder la pregunta 20."
+      if (!answers.participa_asociaciones) return "Falta responder la pregunta 21."
+      if (showRedesDetalles && !(multi.asociaciones?.length)) return "Falta marcar al menos una opción en la pregunta 21."
+      if (showAsociacionesOtro && !answers.asociaciones_otro) return "Falta especificar la opción 'Otro' en la pregunta 21."
+    }
+    if (stepId === "general") {
+      if (!answers.interes_programa) return "Falta responder la pregunta 22."
+      if (showContacto && !answers.contacto_programa) return "Falta completar el dato de contacto en la pregunta 22."
+      if (!answers.modalidad_preferida) return "Falta responder la pregunta 23."
+    }
+    return ""
+  }
+
   const visibleSteps = showCultura ? STEPS : STEPS.filter((step) => step.id !== "cultura")
   const currentStep = visibleSteps[Math.min(stepIndex, visibleSteps.length - 1)]
   const currentStepId = currentStep.id
 
   function goNextStep() {
+    const missing = missingMessage(currentStepId)
+    if (missing) {
+      setWarning(missing)
+      return
+    }
     if (!canContinue(currentStepId)) return
+    setWarning("")
     setStepIndex((current) => Math.min(current + 1, visibleSteps.length - 1))
   }
 
   function goPrevStep() {
+    setWarning("")
     setStepIndex((current) => Math.max(current - 1, 0))
+  }
+
+  function handleFinalSubmit(event: FormEvent<HTMLFormElement>) {
+    if (!submitRequested) {
+      event.preventDefault()
+      return
+    }
   }
 
   if (completed) {
@@ -283,9 +355,15 @@ export function CleanDiagnosticForm() {
   }
 
   return (
-    <form action={action} noValidate className="space-y-6">
+    <form action={action} noValidate onSubmit={handleFinalSubmit} className="space-y-6">
       <input type="hidden" name="answers_json" value={serializedAnswers} />
       <input type="hidden" name="multi_json" value={serializedMulti} />
+      {warning ? (
+        <div className="fixed right-4 top-4 z-50 max-w-md rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-lg">
+          <p className="font-semibold">Revisa esta respuesta</p>
+          <p className="mt-1">{warning}</p>
+        </div>
+      ) : null}
       <Card className="border-slate-200 shadow-sm">
         <CardContent className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50 px-6 py-4 md:flex-row md:items-center md:justify-between">
           <div>
