@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Check, FolderKanban, Loader2, Pencil, Search, Trash2, Users } from "lucide-react"
+import { Check, FolderKanban, Loader2, Pencil, Plus, Search, Trash2, Users } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
