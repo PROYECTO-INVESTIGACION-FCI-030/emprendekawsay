@@ -85,8 +85,8 @@ export default async function AvancePage() {
         descripcion="Gestión central de actividades del proyecto y de producción científica"
         showControls={false}
       />
-      <div className="space-y-4 px-6 pb-8">
-        <div className="grid gap-4 md:grid-cols-4">
+      <div className="space-y-4 px-4 pb-8 sm:px-6">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Avance global</CardTitle>

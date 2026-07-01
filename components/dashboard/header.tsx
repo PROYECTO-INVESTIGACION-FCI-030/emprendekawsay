@@ -62,13 +62,13 @@ export function Header({
   }
 
   return (
-    <header className="flex items-start justify-between gap-4 border-b border-border bg-card px-6 py-4">
+    <header className="flex flex-col gap-4 border-b border-border bg-card px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6">
       <div className="min-w-0">
         <h1 className="truncate text-lg font-semibold text-foreground">{projectName}</h1>
         <p className="truncate text-sm text-muted-foreground">{projectDescription}</p>
       </div>
 
-      <div className="flex shrink-0 items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3 sm:justify-end">
         <Popover>
           <PopoverTrigger
             className="relative rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
@@ -85,7 +85,7 @@ export function Header({
               </span>
             )}
           </PopoverTrigger>
-          <PopoverContent align="end" className="w-80 p-0">
+          <PopoverContent align="end" className="w-[calc(100vw-1.5rem)] max-w-80 p-0 sm:w-80">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <p className="text-sm font-semibold text-foreground">Notificaciones</p>
               <div className="flex items-center gap-2">
@@ -156,7 +156,7 @@ export function Header({
 
         <Link
           href="/perfil"
-          className="flex items-center gap-3 rounded-md p-1 transition-colors hover:bg-secondary"
+          className="flex min-w-0 items-center gap-3 rounded-md p-1 transition-colors hover:bg-secondary"
         >
           <Avatar className="h-9 w-9">
             {avatarUrl && <AvatarImage src={avatarUrl || "/placeholder.svg"} alt={nombre} />}
@@ -164,7 +164,7 @@ export function Header({
               {initials(nombre)}
             </AvatarFallback>
           </Avatar>
-          <div className="leading-tight">
+          <div className="min-w-0 leading-tight">
             <p className="text-sm font-medium text-foreground">{nombre}</p>
             <p className="text-xs text-muted-foreground">{rol}</p>
           </div>
@@ -194,7 +194,7 @@ export function Toolbar({
   action?: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
       <div>
         <h2 className="text-2xl font-semibold text-foreground">{titulo}</h2>
         <p className="text-sm text-muted-foreground">{descripcion}</p>

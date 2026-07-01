@@ -29,7 +29,7 @@ export function AiCoursePredictor({
   if (!predictions.length) {
     return (
       <div className="min-h-full bg-[#f4f8fc] pb-10">
-        <section className="border-b-4 border-[#00a6d6] bg-[#00529b] px-6 py-7 text-white">
+        <section className="border-b-4 border-[#00a6d6] bg-[#00529b] px-4 py-7 text-white sm:px-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="flex items-center gap-2 text-sm font-medium text-cyan-100">
@@ -65,7 +65,7 @@ export function AiCoursePredictor({
 
   return (
     <div className="min-h-full bg-[#f4f8fc] pb-10">
-      <section className="border-b-4 border-[#00a6d6] bg-[#00529b] px-6 py-7 text-white">
+      <section className="border-b-4 border-[#00a6d6] bg-[#00529b] px-4 py-7 text-white sm:px-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm font-medium text-cyan-100"><Bot className="h-5 w-5" />Agente IA de prediccion formativa</div>
@@ -79,11 +79,13 @@ export function AiCoursePredictor({
               <p className="text-xs text-blue-100">respuestas analizadas</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 self-start rounded-full border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold text-white">
-            <span className={cn("h-2.5 w-2.5 rounded-full", source === "gemini" ? "bg-emerald-300" : "bg-amber-300")} />
-            {source === "gemini" ? "Gemini activo" : "Fallback activo"}
+          <div className="max-w-md rounded-md border border-white/15 bg-white/10 px-3 py-1.5 text-left text-[11px] leading-4 text-blue-50">
+            <div className="flex items-center gap-2">
+              <span className={cn("h-2 w-2 shrink-0 rounded-full", source === "gemini" ? "bg-emerald-300" : "bg-amber-300")} />
+              <span className="font-semibold text-white">{source === "gemini" ? "Gemini activo" : "Fallback activo"}</span>
+            </div>
+            {sourceReason ? <p className="mt-1.5 text-blue-50/90">{sourceReason}</p> : null}
           </div>
-          {sourceReason ? <p className="text-xs text-blue-100/90">{sourceReason}</p> : null}
         </div>
       </section>
 

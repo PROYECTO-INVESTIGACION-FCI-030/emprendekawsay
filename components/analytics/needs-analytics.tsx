@@ -31,7 +31,7 @@ export function NeedsAnalytics({
   const responseLabel = data.validacion.encuestadas === 1 ? "respuesta analizada" : "respuestas analizadas"
 
   return (
-    <div className="space-y-5 px-6 pb-8">
+    <div className="space-y-5 px-4 pb-8 sm:px-6">
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="border-blue-100 bg-blue-50/70">
           <CardContent className="pt-6">
@@ -84,12 +84,12 @@ export function NeedsAnalytics({
           <CardHeader>
             <CardTitle className="text-base">Necesidades detectadas por preguntas y respuestas</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <BarChart data={topNeeds} layout="vertical" margin={{ left: 10, right: 36 }}>
+          <CardContent className="overflow-hidden">
+            <ChartContainer config={chartConfig} className="h-[260px] w-full sm:h-[300px]">
+              <BarChart data={topNeeds} layout="vertical" margin={{ left: 10, right: 28 }}>
                 <CartesianGrid horizontal={false} strokeDasharray="3 3" />
                 <XAxis type="number" domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
-                <YAxis dataKey="necesidad" type="category" width={145} tickLine={false} axisLine={false} />
+                <YAxis dataKey="necesidad" type="category" width={120} tickLine={false} axisLine={false} />
                 <ChartTooltip content={<ChartTooltipContent formatter={(value) => `${value}%`} />} />
                 <Bar
                   dataKey="valor"

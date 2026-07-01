@@ -224,6 +224,18 @@ async function getGeminiSuggestions(rows: SurveyRow[]) {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "")
+      if (response.status === 429) {
+        return {
+          suggestions: [],
+          reason: "Gemini alcanzó el límite temporal del plan gratuito. Se usará la predicción de respaldo.",
+        }
+      }
+      if (response.status === 503) {
+        return {
+          suggestions: [],
+          reason: "Gemini está temporalmente saturado. Se usará la predicción de respaldo.",
+        }
+      }
       return { suggestions: [], reason: `Gemini respondió ${response.status}. ${errorText || "Sin detalle."}`.trim() }
     }
 
@@ -322,7 +334,7 @@ export async function getCoursePredictions(): Promise<CoursePredictionResult> {
   const { data, error, count } = await supabase
     .from("cuestionario_limpio_respuestas")
     .select(
-      "antiguedad_emprendimiento, ingreso_mensual, nivel_instruccion, etnia, situacion_formalizacion, control_dinero, planifica_metas, reinvierte_ganancias, define_precios_costos, promocion_negocio, usa_sugerencias_clientes, dispositivo_internet, usa_apps_digitales, usa_pagos_digitales, dificultad_tecnologia, incorpora_cultura, origen_conocimiento_cultural, participa_asociaciones, interes_programa, modalidad_preferida, sector_economico, apps_usadas, pagos_usados",
+      "parroquia, antiguedad_emprendimiento, ingreso_mensual, nivel_instruccion, etnia, situacion_formalizacion, control_dinero, planifica_metas, reinvierte_ganancias, define_precios_costos, promocion_negocio, usa_sugerencias_clientes, dispositivo_internet, usa_apps_digitales, usa_pagos_digitales, dificultad_tecnologia, incorpora_cultura, origen_conocimiento_cultural, participa_asociaciones, interes_programa, modalidad_preferida, sector_economico, apps_usadas, pagos_usados",
       { count: "exact" },
     )
     .limit(5000)

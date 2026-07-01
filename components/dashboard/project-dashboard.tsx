@@ -314,7 +314,7 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
   const activities = useMemo(() => [...data.actividades].sort((a, b) => a.fechaOrden.localeCompare(b.fechaOrden)), [data.actividades])
 
   return (
-    <div className="space-y-4 px-6 pb-8">
+    <div className="space-y-4 px-4 pb-8 sm:px-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-semibold text-foreground">Dashboard</h2>

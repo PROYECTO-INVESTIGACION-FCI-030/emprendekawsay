@@ -118,7 +118,7 @@ export function RoleDashboard({ rolRaw }: { rolRaw: RoleKey }) {
   const data = roleDashboards[rolRaw]
 
   return (
-    <div className="space-y-4 px-6 pb-8">
+    <div className="space-y-4 px-4 pb-8 sm:px-6">
       <Card className="p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>

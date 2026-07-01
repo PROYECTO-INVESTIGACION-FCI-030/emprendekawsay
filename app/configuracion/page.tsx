@@ -19,7 +19,7 @@ export default async function ConfiguracionPage() {
         descripcion="Gestión de usuarios y historial de ingresos"
         showControls={false}
       />
-      <div className="px-6 pb-8">
+      <div className="px-4 pb-8 sm:px-6">
         <ConfiguracionClientWrapper
           usuarios={usuarios.map((u) => ({
             id: u.id,

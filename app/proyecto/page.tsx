@@ -10,7 +10,7 @@ export default async function ProyectoPage() {
   return (
     <AppShell>
       <Toolbar titulo="Proyecto" descripcion="Documentos, evidencia institucional y soporte del proyecto" showControls={false} />
-      <div className="space-y-6 px-6 pb-8">
+      <div className="space-y-6 px-4 pb-8 sm:px-6">
         <ProjectDocumentsManager documents={documents} isAdmin={admin} />
       </div>
     </AppShell>

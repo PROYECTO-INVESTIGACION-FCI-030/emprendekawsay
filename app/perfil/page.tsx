@@ -13,7 +13,7 @@ export default async function PerfilPage() {
         descripcion="Gestiona tus datos personales y preferencias de notificación"
         showControls={false}
       />
-      <div className="px-6 pb-8">
+      <div className="px-4 pb-8 sm:px-6">
         <PerfilForm perfil={ctx.perfil} rol={ctx.rol} />
       </div>
     </AppShell>

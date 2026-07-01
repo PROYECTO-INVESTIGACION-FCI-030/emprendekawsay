@@ -12,7 +12,7 @@ export default async function ReportesPage() {
       <Toolbar titulo="Reportes" descripcion="Informes textuales y exportación de evidencia" showControls={false} />
       <div className="space-y-4 px-4 pb-8 sm:px-6">
         <section className="rounded-md border border-border bg-card">
-          <header className="flex flex-col gap-3 border-b border-border px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <header className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <div>
               <h3 className="text-base font-semibold text-foreground">Resumen del dashboard</h3>
               <p className="text-sm text-muted-foreground">
@@ -21,7 +21,7 @@ export default async function ReportesPage() {
               </p>
             </div>
           </header>
-          <div className="grid gap-4 px-6 py-5 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 px-4 py-5 md:grid-cols-2 xl:grid-cols-4 sm:px-6">
             <article className="rounded-md border border-border bg-background p-4">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Avance</p>
               <p className="mt-2 text-2xl font-semibold text-foreground">{data.proyecto.avance}%</p>
@@ -54,7 +54,7 @@ export default async function ReportesPage() {
         </section>
 
         <section className="grid gap-4 xl:grid-cols-1">
-          <article className="rounded-md border border-border bg-card p-6">
+          <article className="rounded-md border border-border bg-card p-4 sm:p-6">
             <h3 className="text-base font-semibold text-foreground">Descargas disponibles</h3>
             <div className="mt-4 space-y-3">
               <div className="rounded-md border border-border bg-background p-4">
