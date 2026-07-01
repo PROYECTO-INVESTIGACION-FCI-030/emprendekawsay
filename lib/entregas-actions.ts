@@ -82,6 +82,6 @@ export async function entregarTarea(formData: FormData): Promise<EntregaActionRe
     await supabase.storage.from("entregas-tareas").remove([anterior.archivo_path])
   }
 
-  revalidatePath("/")
+  revalidatePath("/", "layout")
   return { ok: true, message: "Tarea entregada correctamente." }
 }

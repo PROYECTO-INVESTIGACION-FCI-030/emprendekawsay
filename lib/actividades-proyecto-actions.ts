@@ -40,7 +40,7 @@ export async function guardarActividadProyecto(formData: FormData): Promise<void
   if (error) return
 
   revalidatePath("/avance")
-  revalidatePath("/")
+  revalidatePath("/", "layout")
 }
 
 export async function actualizarActividadProyecto(formData: FormData): Promise<void> {
@@ -64,5 +64,19 @@ export async function actualizarActividadProyecto(formData: FormData): Promise<v
   if (error) return
 
   revalidatePath("/avance")
-  revalidatePath("/")
+  revalidatePath("/", "layout")
+}
+
+export async function eliminarActividadProyecto(formData: FormData): Promise<void> {
+  const ctx = await contextoGestion()
+  if (ctx.error || !ctx.user) return
+
+  const id = String(formData.get("id") ?? "").trim()
+  if (!id) return
+
+  const { error } = await ctx.supabase.from("actividades_proyecto").delete().eq("id", id)
+  if (error) return
+
+  revalidatePath("/avance")
+  revalidatePath("/", "layout")
 }

@@ -28,7 +28,7 @@ async function contextoGestion() {
 
 function revalidar() {
   revalidatePath("/malla-formativa")
-  revalidatePath("/")
+  revalidatePath("/", "layout")
 }
 
 export async function guardarMaterialFormativo(formData: FormData) {

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { Eye, EyeOff, FilePenLine, Pencil, Plus, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
@@ -36,6 +36,12 @@ export function CourseManager({ cursos, encargados }: { cursos: Curso[]; encarga
   const [courseDescription, setCourseDescription] = useState("")
   const [courseStatus, setCourseStatus] = useState<Curso["estado"]>("en_diseno")
   const [courseManagerId, setCourseManagerId] = useState("")
+
+  useEffect(() => {
+    if (!result?.message) return
+    const timeout = window.setTimeout(() => setResult(null), 3500)
+    return () => window.clearTimeout(timeout)
+  }, [result])
 
   function run(action: () => Promise<CursoActionResult>, close = false) {
     startTransition(async () => {

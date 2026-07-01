@@ -246,6 +246,7 @@ function calculateDashboard(rows: DashboardRow[]): ProjectDashboardData {
 }
 
 function calculateTimelineProgress(activities: Array<{ fecha: string; estado: string }>) {
+  const executedStates = new Set(["en_proceso", "completado", "publicado", "en_redaccion", "en_revision"])
   const ordered = [...activities].sort((a, b) => {
     const aDate = parseDateOnly(a.fecha)?.getTime() ?? Number.POSITIVE_INFINITY
     const bDate = parseDateOnly(b.fecha)?.getTime() ?? Number.POSITIVE_INFINITY
@@ -253,7 +254,7 @@ function calculateTimelineProgress(activities: Array<{ fecha: string; estado: st
   })
 
   const total = ordered.length
-  const completed = ordered.filter((activity) => ["publicado", "completado"].includes(activity.estado)).length
+  const completed = ordered.filter((activity) => executedStates.has(activity.estado)).length
   const progress = total ? Math.round((completed / total) * 100) : 0
 
   const grouped = new Map<string, { fecha: string; planned: number; executed: number }>()
@@ -266,7 +267,7 @@ function calculateTimelineProgress(activities: Array<{ fecha: string; estado: st
       executed: 0,
     }
     current.planned += 1
-    if (["publicado", "completado"].includes(activity.estado)) current.executed += 1
+    if (executedStates.has(activity.estado)) current.executed += 1
     grouped.set(key, current)
   }
 
@@ -415,6 +416,7 @@ export async function getProjectDashboardData(): Promise<ProjectDashboardData> {
   ])
   const rows = csvRows
   const courseStats = calculateCourseStats(cursos)
+  const cursosCompletados = courseStats.estados.find((item) => item.estado === "Completados")?.valor ?? 0
   const projectActivities = actividadesProyecto
     .filter((actividad) => actividad.estado !== "completado" && actividad.estado !== "cancelado")
     .map((actividad) => ({
@@ -437,6 +439,12 @@ export async function getProjectDashboardData(): Promise<ProjectDashboardData> {
     })),
     ...scientificRawActivities,
   ])
+  const actividadesCompletadasProyecto = actividadesProyecto.filter((actividad) => actividad.estado === "completado").length
+  const produccionCompletada = production.resumen.completados
+  const validacionCumplida = csvCount >= projectInfo.metaValidacion ? 1 : 0
+  const totalCierres = actividadesProyecto.length + production.resumen.meta + cursos.length + 1
+  const cierresCompletados = actividadesCompletadasProyecto + produccionCompletada + cursosCompletados + validacionCumplida
+  const avanceGlobal = totalCierres ? Math.round((cierresCompletados / totalCierres) * 100) : 0
 
   const dashboard = calculateDashboard(rows)
   return {
@@ -454,7 +462,7 @@ export async function getProjectDashboardData(): Promise<ProjectDashboardData> {
     },
     proyecto: {
       ...dashboard.proyecto,
-      avance: progressTimeline.avance,
+      avance: avanceGlobal,
       inicio: projectInfo.fechaInicio,
       fin: projectInfo.fechaFin,
       tiempoTranscurrido: projectInfo.porcentajeTranscurrido,

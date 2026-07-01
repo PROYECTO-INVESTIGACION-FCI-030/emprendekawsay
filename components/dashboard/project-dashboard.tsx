@@ -254,11 +254,11 @@ function getTopCards(data: ProjectDashboardData): DashboardCardData[] {
     },
     {
       title: "Producción Científica",
-      value: `${data.produccion.completados} / ${data.produccion.meta}`,
-      detail: "Productos completados",
+      value: `${data.produccion.completados} / ${data.produccion.total ?? data.produccion.meta}`,
+      detail: "Ejecutados / totales",
       icon: FileText,
       color: "text-chart-3",
-      footer: `${data.produccion.cumplimiento}% de cumplimiento`,
+      footer: `${data.produccion.cumplimiento}% de cumplimiento · En proceso: ${data.produccion.enProceso ?? 0} · Pendientes: ${data.produccion.pendientes}`,
     },
     {
       title: "Validación del Programa",
@@ -289,6 +289,18 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
       })),
     [data.produccionPorInvestigador, productionFilter],
   )
+  const productionBars = useMemo(() => {
+    if (productionFilter === "altoImpacto") {
+      return [{ key: "altoImpacto", label: "Alto impacto", color: "var(--color-altoImpacto)" }]
+    }
+    if (productionFilter === "regional") {
+      return [{ key: "regional", label: "Regional", color: "var(--color-regional)" }]
+    }
+    return [
+      { key: "altoImpacto", label: "Alto impacto", color: "var(--color-altoImpacto)" },
+      { key: "regional", label: "Regional", color: "var(--color-regional)" },
+    ]
+  }, [productionFilter])
   const competencyData = useMemo(() => {
     if (competencyFilter === "bajas") return data.competencias.filter((item) => item.valor < 50)
     if (competencyFilter === "altas") return data.competencias.filter((item) => item.valor >= 50)
@@ -367,20 +379,26 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
               ]}
             />
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={productionConfig} className="h-[260px] w-full">
-              <BarChart data={productionData} margin={{ left: 0, right: 12, top: 8 }}>
+          <CardContent className="flex justify-center">
+            <ChartContainer
+              key={productionFilter}
+              config={productionConfig}
+              className={cn(
+                "h-[260px] w-full",
+                productionFilter === "todos" ? "max-w-[720px]" : "max-w-[620px]",
+              )}
+            >
+              <BarChart data={productionData} margin={{ left: 24, right: 24, top: 8, bottom: 8 }} barCategoryGap="28%" barGap={4}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis dataKey="investigador" tickLine={false} axisLine={false} tickMargin={8} style={{ fontSize: 11 }} />
-                <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
+                <XAxis dataKey="investigador" tickLine={false} axisLine={false} tickMargin={8} minTickGap={16} style={{ fontSize: 11 }} />
+                <YAxis tickLine={false} axisLine={false} allowDecimals={false} width={34} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <ChartLegend content={<ChartLegendContent />} />
-                <Bar dataKey="altoImpacto" fill="var(--color-altoImpacto)" radius={[4, 4, 0, 0]}>
-                  <LabelList dataKey="altoImpacto" position="top" className="fill-foreground text-xs font-medium" />
-                </Bar>
-                <Bar dataKey="regional" fill="var(--color-regional)" radius={[4, 4, 0, 0]}>
-                  <LabelList dataKey="regional" position="top" className="fill-foreground text-xs font-medium" />
-                </Bar>
+                {productionBars.map((bar) => (
+                  <Bar key={bar.key} dataKey={bar.key} fill={bar.color} radius={[4, 4, 0, 0]}>
+                    <LabelList dataKey={bar.key} position="top" className="fill-foreground text-xs font-medium" />
+                  </Bar>
+                ))}
               </BarChart>
             </ChartContainer>
           </CardContent>

@@ -43,6 +43,12 @@ export function ProjectDocumentsManager({ documents, isAdmin }: Props) {
   const [selectedFileName, setSelectedFileName] = useState<string>("")
 
   useEffect(() => {
+    if (!message) return
+    const timeout = window.setTimeout(() => setMessage(null), 3500)
+    return () => window.clearTimeout(timeout)
+  }, [message])
+
+  useEffect(() => {
     if (!open) {
       setEditing(null)
       setForm(EMPTY_FORM)

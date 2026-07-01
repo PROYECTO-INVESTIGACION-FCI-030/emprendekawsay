@@ -94,6 +94,6 @@ export async function guardarCuestionarioLimpio(
 
   revalidatePath("/diagnostico")
   revalidatePath("/diagnostico/encuesta")
-  revalidatePath("/")
+  revalidatePath("/", "layout")
   return { ok: true, message: "Encuesta guardada correctamente." }
 }

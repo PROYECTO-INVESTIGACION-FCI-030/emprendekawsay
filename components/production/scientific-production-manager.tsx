@@ -1,6 +1,6 @@
 ﻿"use client"
 
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { ExternalLink, FilePlus2, Pencil, Trash2, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
@@ -69,6 +69,12 @@ export function ScientificProductionManager({
   const [responsibles, setResponsibles] = useState<string[]>([])
   const [message, setMessage] = useState("")
   const visible = products.filter((product) => view === "ejecutados" ? product.estado === "publicado" : product.estado !== "publicado")
+
+  useEffect(() => {
+    if (!message) return
+    const timeout = window.setTimeout(() => setMessage(""), 3500)
+    return () => window.clearTimeout(timeout)
+  }, [message])
 
   function openProduct(product?: ScientificProduct) {
     setEditing(product ?? null)

@@ -1,12 +1,36 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { registrarNotificacion } from "@/lib/notificaciones-db"
 import { obtenerRolUsuario } from "@/lib/roles"
 import { createClient } from "@/lib/supabase/server"
 
 const TYPES = ["alto_impacto", "regional"]
 const STATES = ["pendiente", "en_redaccion", "en_revision", "publicado"]
 const ROLES_PRODUCCION = ["administradora", "investigadora", "formadora", "institucion_aliada"]
+
+async function notificarProduccion(titulo: string, estado: string) {
+  const tipo = estado === "publicado" ? "exito" : estado === "en_revision" ? "alerta" : "info"
+  const mensaje =
+    estado === "publicado"
+      ? `La publicación "${titulo}" ya quedó publicada.`
+      : estado === "en_revision"
+        ? `La publicación "${titulo}" está en revisión.`
+        : `La publicación "${titulo}" está en redacción.`
+
+  await Promise.allSettled(
+    ["administradora", "investigadora", "formadora", "institucion_aliada"].map((rol) =>
+      registrarNotificacion({
+        rol,
+        titulo: "Producción científica actualizada",
+        mensaje,
+        tipo,
+        href: "/produccion",
+        accion: "Ver producción",
+      }),
+    ),
+  )
+}
 
 async function context() {
   const supabase = await createClient()
@@ -78,6 +102,8 @@ export async function saveScientificProduct(formData: FormData) {
     productId = data.id
   }
 
+  await notificarProduccion(titulo, estado)
+
   await ctx.supabase.from("productos_cientificos_investigadores").delete().eq("id_producto", productId)
   if (investigadores.length > 0) {
     const { error: relationError } = await ctx.supabase
@@ -86,7 +112,7 @@ export async function saveScientificProduct(formData: FormData) {
     if (relationError) return { ok: false, message: relationError.message }
   }
 
-  revalidatePath("/")
+  revalidatePath("/", "layout")
   revalidatePath("/produccion")
   return { ok: true, message: id ? "Producto actualizado." : "Publicación registrada." }
 }
@@ -96,7 +122,7 @@ export async function deleteScientificProduct(id: string) {
   if (!ctx.allowed) return { ok: false, message: "No autorizado." }
   const { error } = await ctx.supabase.from("productos_cientificos").delete().eq("id", id)
   if (error) return { ok: false, message: error.message }
-  revalidatePath("/")
+  revalidatePath("/", "layout")
   revalidatePath("/produccion")
   return { ok: true, message: "Producto eliminado." }
 }

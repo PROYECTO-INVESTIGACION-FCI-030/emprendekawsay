@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Header } from "@/components/dashboard/header"
 import type { Notificacion } from "@/lib/perfil"
 
@@ -12,6 +13,8 @@ export function HeaderSync({
   initialAvatarUrl,
   initialNotificacionesActivas,
   notificaciones,
+  initialReadIds,
+  userId,
 }: {
   initialProjectName: string
   initialProjectDescription: string
@@ -20,12 +23,16 @@ export function HeaderSync({
   initialAvatarUrl: string | null
   initialNotificacionesActivas: boolean
   notificaciones: Notificacion[]
+  initialReadIds: string[]
+  userId: string | null
 }) {
+  const router = useRouter()
   const [projectName, setProjectName] = useState(initialProjectName)
   const [projectDescription, setProjectDescription] = useState(initialProjectDescription)
   const [nombre, setNombre] = useState(initialNombre)
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl)
   const [notificacionesActivas, setNotificacionesActivas] = useState(initialNotificacionesActivas)
+  const [readIds, setReadIds] = useState<Set<string>>(() => new Set(initialReadIds))
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -59,6 +66,31 @@ export function HeaderSync({
     setProjectDescription(initialProjectDescription)
   }, [initialProjectName, initialProjectDescription])
 
+  async function marcarLeidas(ids: string[]) {
+    if (ids.length === 0) return
+    const previous = new Set(readIds)
+    setReadIds((current) => {
+      const next = new Set(current)
+      ids.forEach((id) => next.add(id))
+      return next
+    })
+    const response = await fetch("/api/notificaciones/leer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids, userId }),
+    })
+    if (!response.ok) {
+      setReadIds(previous)
+      return
+    }
+    router.refresh()
+  }
+
+  const listaNotificaciones = notificaciones.map((notificacion) => ({
+    ...notificacion,
+    leida: readIds.has(notificacion.id) || notificacion.leida,
+  }))
+
   return (
     <Header
       projectName={projectName}
@@ -67,7 +99,9 @@ export function HeaderSync({
       rol={initialRol}
       avatarUrl={avatarUrl}
       notificacionesActivas={notificacionesActivas}
-      notificaciones={notificaciones}
+      notificaciones={listaNotificaciones}
+      onMarkRead={(id) => marcarLeidas([id])}
+      onMarkAllRead={() => marcarLeidas(listaNotificaciones.filter((item) => !item.leida).map((item) => item.id))}
     />
   )
 }

@@ -137,7 +137,7 @@ export async function guardarEncuestaInicial({
   }
 
   revalidatePath("/diagnostico")
-  revalidatePath("/")
+  revalidatePath("/", "layout")
 
   return {
     ok: true,

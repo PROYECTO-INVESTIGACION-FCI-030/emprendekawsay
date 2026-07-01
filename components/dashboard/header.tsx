@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Bell, BellOff, Download, LogOut, Info, CircleCheck, TriangleAlert } from "lucide-react"
+import { Bell, BellOff, CheckCheck, Download, LogOut, Info, CircleCheck, TriangleAlert } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { createClient } from "@/lib/supabase/client"
@@ -38,6 +38,8 @@ export function Header({
   avatarUrl = null,
   notificacionesActivas = true,
   notificaciones = [],
+  onMarkRead,
+  onMarkAllRead,
 }: {
   projectName?: string
   projectDescription?: string
@@ -46,6 +48,8 @@ export function Header({
   avatarUrl?: string | null
   notificacionesActivas?: boolean
   notificaciones?: Notificacion[]
+  onMarkRead?: (id: string) => void
+  onMarkAllRead?: () => void
 }) {
   const router = useRouter()
   const visibles = notificacionesActivas ? notificaciones : []
@@ -84,11 +88,23 @@ export function Header({
           <PopoverContent align="end" className="w-80 p-0">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <p className="text-sm font-semibold text-foreground">Notificaciones</p>
-              {notificacionesActivas && noLeidas > 0 && (
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                  {noLeidas} nuevas
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {notificacionesActivas && noLeidas > 0 && (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                    {noLeidas} nuevas
+                  </span>
+                )}
+                {notificacionesActivas && noLeidas > 0 ? (
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-secondary"
+                    onClick={onMarkAllRead}
+                  >
+                    <CheckCheck className="h-3.5 w-3.5" />
+                    Leer todo
+                  </button>
+                ) : null}
+              </div>
             </div>
             <div className="max-h-80 overflow-y-auto">
               {!notificacionesActivas ? (
@@ -115,11 +131,20 @@ export function Header({
                         )}
                       >
                         <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", TIPO_COLOR[n.tipo])} />
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-foreground">{n.titulo}</p>
                           <p className="text-xs text-muted-foreground">{n.mensaje}</p>
                           <p className="mt-1 text-[11px] text-muted-foreground/70">{n.fecha}</p>
                         </div>
+                        {!n.leida ? (
+                          <button
+                            type="button"
+                            className="mt-0.5 inline-flex h-6 items-center rounded-md border border-border px-1.5 text-[10px] font-medium text-muted-foreground hover:bg-secondary"
+                            onClick={() => onMarkRead?.(n.id)}
+                          >
+                            Leída
+                          </button>
+                        ) : null}
                       </li>
                     )
                   })}

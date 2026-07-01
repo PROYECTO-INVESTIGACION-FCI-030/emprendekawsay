@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
 import { Eye, EyeOff, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -56,6 +56,12 @@ export function MallaFormativaManager({ cursos, materiales }: { cursos: Material
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<MaterialFormativo | null>(null)
   const [form, setForm] = useState<FormState>(initialForm)
+
+  useEffect(() => {
+    if (!message) return
+    const timeout = window.setTimeout(() => setMessage(null), 3500)
+    return () => window.clearTimeout(timeout)
+  }, [message])
 
   const groupedByCourse = useMemo(() => {
     const map = new Map<string, MaterialFormativo[]>()

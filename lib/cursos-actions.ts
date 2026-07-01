@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import sanitizeHtml from "sanitize-html"
+import { registrarNotificacion } from "@/lib/notificaciones-db"
 import { obtenerRolUsuario } from "@/lib/roles"
 import { createClient } from "@/lib/supabase/server"
 
@@ -32,9 +33,24 @@ function datetimeLocalToIsoGuayaquil(value: string) {
 }
 
 function revalidarCursos() {
-  revalidatePath("/")
+  revalidatePath("/", "layout")
   revalidatePath("/diseno-cursos")
   revalidatePath("/malla-formativa")
+}
+
+async function notificarRoles(roles: string[], payload: { titulo: string; mensaje: string; tipo?: "info" | "alerta" | "exito"; href?: string; accion?: string }) {
+  await Promise.allSettled(
+    roles.map((rol) =>
+      registrarNotificacion({
+        rol,
+        titulo: payload.titulo,
+        mensaje: payload.mensaje,
+        tipo: payload.tipo ?? "info",
+        href: payload.href ?? null,
+        accion: payload.accion ?? null,
+      }),
+    ),
+  )
 }
 
 async function contextoGestion() {
@@ -81,6 +97,16 @@ export async function guardarCurso(formData: FormData): Promise<CursoActionResul
   const { error } = await query
 
   if (error) return { ok: false, message: `No se pudo guardar el curso: ${error.message}` }
+  await notificarRoles(
+    ["administradora", "formadora", "investigadora", "institucion_aliada", "mujer_emprendedora"],
+    {
+      titulo: id ? "Curso actualizado" : "Curso creado",
+      mensaje: `El curso "${titulo}" fue ${id ? "actualizado" : "creado"} en Diseño de Cursos.`,
+      tipo: "info",
+      href: "/diseno-cursos",
+      accion: "Abrir cursos",
+    },
+  )
   revalidarCursos()
   return { ok: true, message: id ? "Curso actualizado." : "Curso creado." }
 }
@@ -196,6 +222,16 @@ export async function guardarTarea(formData: FormData): Promise<CursoActionResul
   const { error } = await query
 
   if (error) return { ok: false, message: `No se pudo guardar la tarea: ${error.message}` }
+  await notificarRoles(
+    ["mujer_emprendedora", "formadora", "investigadora", "administradora"],
+    {
+      titulo: id ? "Tarea actualizada" : "Nueva tarea",
+      mensaje: `La tarea "${titulo}" fue ${id ? "actualizada" : "creada"} para el curso.`,
+      tipo: "alerta",
+      href: `/formacion/${idCurso}`,
+      accion: "Ver tarea",
+    },
+  )
   revalidarCursos()
   return { ok: true, message: id ? "Tarea actualizada." : "Tarea creada." }
 }
@@ -209,6 +245,15 @@ export async function cambiarVisibilidadTarea(id: string, visible: boolean): Pro
     .eq("id", id)
 
   if (error) return { ok: false, message: `No se pudo cambiar la visibilidad: ${error.message}` }
+  if (visible) {
+    await notificarRoles(["mujer_emprendedora", "formadora", "investigadora", "administradora"], {
+      titulo: "Tarea publicada",
+      mensaje: "Una tarea del curso quedó disponible para las participantes.",
+      tipo: "info",
+      href: "/diseno-cursos",
+      accion: "Revisar",
+    })
+  }
   revalidarCursos()
   return { ok: true, message: visible ? "Tarea publicada." : "Tarea ocultada." }
 }
@@ -272,6 +317,13 @@ export async function guardarModulo(formData: FormData): Promise<CursoActionResu
   const { error } = await query
 
   if (error) return { ok: false, message: `No se pudo guardar el modulo: ${error.message}` }
+  await notificarRoles(["formadora", "investigadora", "administradora"], {
+    titulo: id ? "Modulo actualizado" : "Nuevo modulo",
+    mensaje: `Se ${id ? "actualizó" : "creó"} el modulo "${titulo}" del curso.`,
+    tipo: "info",
+    href: `/diseno-cursos/${idCurso}`,
+    accion: "Abrir curso",
+  })
   revalidarCursos()
   revalidatePath(`/diseno-cursos/${idCurso}`)
   revalidatePath(`/formacion/${idCurso}`)
@@ -287,6 +339,15 @@ export async function cambiarVisibilidadModulo(id: string, idCurso: string, visi
     .eq("id", id)
 
   if (error) return { ok: false, message: `No se pudo cambiar la visibilidad: ${error.message}` }
+  if (visible) {
+    await notificarRoles(["formadora", "investigadora", "administradora"], {
+      titulo: "Modulo publicado",
+      mensaje: "Un modulo del curso quedó visible.",
+      tipo: "info",
+      href: `/diseno-cursos/${idCurso}`,
+      accion: "Ver modulo",
+    })
+  }
   revalidatePath(`/diseno-cursos/${idCurso}`)
   revalidatePath(`/formacion/${idCurso}`)
   return { ok: true, message: visible ? "Modulo publicado." : "Modulo ocultado." }
@@ -328,6 +389,13 @@ export async function calificarEntrega(formData: FormData): Promise<CursoActionR
   revalidatePath(`/diseno-cursos/${idCurso}`)
   if (idTarea) revalidatePath(`/diseno-cursos/${idCurso}/tareas/${idTarea}`)
   revalidatePath(`/formacion/${idCurso}`)
-  revalidatePath("/")
+  revalidatePath("/", "layout")
+  await notificarRoles(["mujer_emprendedora"], {
+    titulo: "Entrega calificada",
+    mensaje: `Tu tarea recibió una calificación de ${calificacion}/10.`,
+    tipo: calificacion >= 7 ? "exito" : "alerta",
+    href: `/formacion/${idCurso}`,
+    accion: "Ver resultado",
+  })
   return { ok: true, message: "Calificacion guardada." }
 }

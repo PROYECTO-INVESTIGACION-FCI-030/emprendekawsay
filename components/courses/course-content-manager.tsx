@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import {
   ArrowLeft,
   CalendarClock,
@@ -77,6 +77,12 @@ export function CourseContentManager({
   const [taskTitle, setTaskTitle] = useState("")
   const [taskDescription, setTaskDescription] = useState("")
   const [taskDeadline, setTaskDeadline] = useState("")
+
+  useEffect(() => {
+    if (!result?.message) return
+    const timeout = window.setTimeout(() => setResult(null), 3500)
+    return () => window.clearTimeout(timeout)
+  }, [result])
 
   function run(action: () => Promise<CursoActionResult>, close?: () => void) {
     startTransition(async () => {

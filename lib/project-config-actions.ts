@@ -50,7 +50,7 @@ export async function actualizarConfiguracionProyecto(
     return { ok: false, message: `No se pudo guardar. Verifica que ejecutaste scripts/005_configuracion_proyecto.sql. ${error.message}` }
   }
 
-  revalidatePath("/")
+  revalidatePath("/", "layout")
   revalidatePath("/configuracion")
   revalidatePath("/", "layout")
   return { ok: true, message: "Configuración del proyecto guardada correctamente." }

@@ -64,8 +64,12 @@ export async function getScientificProducts(): Promise<ScientificProduct[]> {
 
 export async function getProductionDashboardData() {
   const products = await getScientificProducts()
+  const ejecutadas = products.filter((product) => product.estado === "publicado")
+  const publicadas = products.filter((product) => product.estado === "publicado")
+  const pendientes = products.filter((product) => product.estado === "pendiente").length
+  const enProceso = products.filter((product) => product.estado === "en_redaccion" || product.estado === "en_revision").length
   const map = new Map<string, { investigador: string; altoImpacto: number; regional: number; total: number }>()
-  for (const product of products) {
+  for (const product of ejecutadas) {
     for (const investigator of product.investigadores) {
       const current = map.get(investigator.id) ?? { investigador: investigator.nombre, altoImpacto: 0, regional: 0, total: 0 }
       current.total += 1
@@ -74,14 +78,18 @@ export async function getProductionDashboardData() {
       map.set(investigator.id, current)
     }
   }
-  const completados = products.filter((product) => product.estado === "publicado").length
+  const completados = ejecutadas.length
   return {
     resumen: {
       completados,
+      pendientes,
+      enProceso,
+      total: products.length,
       meta: products.length,
       cumplimiento: products.length ? Math.round((completados / products.length) * 100) : 0,
     },
     investigadores: [...map.values()],
     productos: products,
+    productosPublicados: publicadas,
   }
 }

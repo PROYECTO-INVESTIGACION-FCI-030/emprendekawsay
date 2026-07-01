@@ -25,7 +25,7 @@ export async function crearCursoPredicho(titulo: string, descripcion: string) {
   })
   if (error) return { ok: false, message: `No se pudo crear el curso: ${error.message}` }
 
-  revalidatePath("/")
+  revalidatePath("/", "layout")
   revalidatePath("/prediccion")
   revalidatePath("/diseno-cursos")
   return { ok: true, message: "Curso creado como borrador en Diseño de Cursos." }

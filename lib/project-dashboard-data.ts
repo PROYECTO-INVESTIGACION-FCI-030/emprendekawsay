@@ -14,6 +14,9 @@ export type ProjectDashboardData = {
   }
   produccion: {
     completados: number
+    pendientes: number
+    enProceso?: number
+    total?: number
     meta: number
     cumplimiento: number
   }
@@ -60,6 +63,7 @@ export const fallbackProjectDashboardData: ProjectDashboardData = {
   },
   produccion: {
     completados: 3,
+    pendientes: 7,
     meta: 10,
     cumplimiento: 30,
   },
