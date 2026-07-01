@@ -7,22 +7,26 @@ export async function registrarHistorialCliente(params: {
   accion: string
   paginaNombre?: string
 }) {
-  const supabase = createClient()
-  const { data } = await supabase.auth.getUser()
-  const userId = data.user?.id
-  if (!userId) return false
+  try {
+    const supabase = createClient()
+    const { data } = await supabase.auth.getUser()
+    const userId = data.user?.id
+    if (!userId) return false
 
-  await fetch("/api/login-history", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      userId,
-      ruta: params.ruta,
-      accion: params.accion,
-      pagina_nombre: params.paginaNombre ?? params.ruta,
-    }),
-    keepalive: true,
-  }).catch(() => null)
+    await fetch("/api/login-history", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        ruta: params.ruta,
+        accion: params.accion,
+        pagina_nombre: params.paginaNombre ?? params.ruta,
+      }),
+      keepalive: true,
+    })
 
-  return true
+    return true
+  } catch {
+    return false
+  }
 }

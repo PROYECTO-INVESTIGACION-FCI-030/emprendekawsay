@@ -1,102 +1,250 @@
+import fs from "node:fs"
+import path from "node:path"
 import { NextResponse } from "next/server"
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib"
 import { getProjectDashboardData } from "@/lib/project-dashboard"
+import { getProjectInfo } from "@/lib/project-info"
 
-function escapePdfText(value: string) {
-  return value.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)")
+type AiSummary = {
+  resumen: string[]
+  hallazgos: string[]
+  recomendaciones: string[]
 }
 
-function wrapLines(text: string, maxChars = 90) {
+function wrapLines(text: string, maxChars = 88) {
   const words = text.split(/\s+/)
   const lines: string[] = []
   let current = ""
   for (const word of words) {
-    const next = current ? `${current} ${word}` : word
-    if (next.length > maxChars) {
+    const candidate = current ? `${current} ${word}` : word
+    if (candidate.length > maxChars) {
       if (current) lines.push(current)
       current = word
     } else {
-      current = next
+      current = candidate
     }
   }
   if (current) lines.push(current)
   return lines
 }
 
-function buildPdf(lines: string[]) {
-  const contentLines = ["BT", "/F1 12 Tf", "1 0 0 1 50 790 Tm"]
-  let first = true
-  for (const line of lines) {
-    if (!first) contentLines.push("0 -16 Td")
-    contentLines.push(`(${escapePdfText(line)}) Tj`)
-    first = false
-  }
-  contentLines.push("ET")
-  const content = contentLines.join("\n")
-
-  const objects: string[] = []
-  const offsets: number[] = []
-  let length = 0
-  function addObject(body: string) {
-    offsets.push(length)
-    objects.push(body)
-    length += body.length
+async function buildAiSummary(data: Awaited<ReturnType<typeof getProjectDashboardData>>): Promise<AiSummary> {
+  const apiKey = process.env.GEMINI_API_KEY
+  const fallback: AiSummary = {
+      resumen: [
+        `El proyecto registra un avance global de ${data.proyecto.avance}% dentro del periodo informado.`,
+        "El informe consolida diagnóstico, validación, producción científica y avance general del proyecto.",
+      ],
+    hallazgos: [
+      `La validación del programa registra ${data.validacion.encuestadas} participantes frente a una meta de ${data.validacion.meta}.`,
+      `La producción científica completada alcanza ${data.produccion.completados} productos de una meta de ${data.produccion.meta}.`,
+    ],
+      recomendaciones: [
+        "Fortalecer las necesidades críticas vinculadas con marketing digital, herramientas básicas y pagos digitales.",
+        "Mantener la actualización de la base de datos para que los resúmenes institucionales reflejen el avance real.",
+      ],
   }
 
-  addObject("%PDF-1.4\n")
-  addObject("1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n")
-  addObject("2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n")
-  addObject("3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj\n")
-  addObject("4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n")
-  addObject(`5 0 obj << /Length ${content.length} >> stream\n${content}\nendstream\nendobj\n`)
+  if (!apiKey) return fallback
 
-  const body = objects.join("")
-  const xrefOffset = body.length
-  const xref = [
-    "xref",
-    "0 6",
-    "0000000000 65535 f ",
-    ...offsets.map((offset) => String(offset).padStart(10, "0") + " 00000 n "),
-    "trailer << /Size 6 /Root 1 0 R >>",
-    "startxref",
-    String(xrefOffset),
-    "%%EOF",
+  const prompt = [
+    "Redacta un informe institucional breve, formal y académico para un proyecto de investigación sobre mujeres emprendedoras indígenas.",
+    "Usa solo los datos entregados y no inventes cifras.",
+    "Escribe con tono institucional, sobrio y profesional, como si fuera un informe universitario de seguimiento.",
+    "Evita frases genéricas, redundancias, lenguaje promocional y expresiones demasiado conversacionales.",
+    "Prioriza redacción clara, sintaxis limpia, vocabulario técnico moderado y coherencia entre secciones.",
+    "Devuelve solo JSON válido con esta estructura exacta:",
+    '{"resumen":["..."],"hallazgos":["..."],"recomendaciones":["..."]}',
+    "Cada arreglo debe tener entre 2 y 4 elementos, redactados en español claro, preciso y elegante.",
+    "El resumen debe sonar como un texto de informe; los hallazgos deben ser analíticos; las recomendaciones deben ser concretas y accionables.",
+    `Datos: ${JSON.stringify({
+      titulo: (await getProjectInfo()).nombre,
+      periodo: data.periodo,
+      avance: data.proyecto.avance,
+      produccion: data.produccion,
+      validacion: data.validacion,
+      diagnostico: data.diagnostico,
+      necesidades: data.necesidades.slice(0, 5),
+      competencias: data.competencias.slice(0, 5),
+    })}`,
   ].join("\n")
 
-  return Buffer.from(body + xref, "binary")
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.25, responseMimeType: "application/json" },
+      }),
+    })
+
+    if (!response.ok) return fallback
+    const payload = await response.json()
+    const text = payload?.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text ?? "").join("") ?? ""
+    const parsed = JSON.parse(text)
+    return {
+      resumen: Array.isArray(parsed?.resumen) ? parsed.resumen.filter((item: unknown) => typeof item === "string") : fallback.resumen,
+      hallazgos: Array.isArray(parsed?.hallazgos) ? parsed.hallazgos.filter((item: unknown) => typeof item === "string") : fallback.hallazgos,
+      recomendaciones: Array.isArray(parsed?.recomendaciones)
+        ? parsed.recomendaciones.filter((item: unknown) => typeof item === "string")
+        : fallback.recomendaciones,
+    }
+  } catch {
+    return fallback
+  }
+}
+
+async function buildPdf(data: Awaited<ReturnType<typeof getProjectDashboardData>>, ai: AiSummary) {
+  const pdf = await PDFDocument.create()
+  const regular = await pdf.embedFont(StandardFonts.Helvetica)
+  const bold = await pdf.embedFont(StandardFonts.HelveticaBold)
+
+  const logoPath = path.join(process.cwd(), "public", "ugcircle.png")
+  const logoBytes = fs.existsSync(logoPath) ? fs.readFileSync(logoPath) : null
+  const logo = logoBytes ? await pdf.embedPng(logoBytes) : null
+
+  const blue = rgb(0.06, 0.31, 0.51)
+  const lightBlue = rgb(0.93, 0.96, 1)
+  const gray = rgb(0.3, 0.34, 0.39)
+  const projectInfo = await getProjectInfo()
+  const coverTitle = projectInfo?.nombre?.trim() || "Proyecto FCI 2025"
+
+  const page1 = pdf.addPage([595.28, 841.89])
+  const { width, height } = page1.getSize()
+  page1.drawRectangle({ x: 0, y: height - 150, width, height: 150, color: blue })
+
+  if (logo) {
+    const logoWidth = 92
+    const logoHeight = (logo.height / logo.width) * logoWidth
+    page1.drawImage(logo, { x: 42, y: height - 126, width: logoWidth, height: logoHeight })
+  }
+
+  page1.drawText("Universidad de Guayaquil", {
+    x: logo ? 148 : 42,
+    y: height - 60,
+    size: 18,
+    font: bold,
+    color: rgb(1, 1, 1),
+  })
+  page1.drawText("Informe institucional automatizado", {
+    x: logo ? 148 : 42,
+    y: height - 84,
+    size: 10.4,
+    font: regular,
+    color: rgb(1, 1, 1),
+  })
+
+  page1.drawText(coverTitle, {
+    x: 42,
+    y: height - 220,
+    size: 18,
+    font: bold,
+    color: blue,
+    maxWidth: width - 84,
+    lineHeight: 24,
+  })
+  page1.drawText(`Periodo de seguimiento: ${data.periodo}`, {
+    x: 42,
+    y: height - 255,
+    size: 10.5,
+    font: regular,
+    color: gray,
+  })
+  page1.drawRectangle({ x: 42, y: height - 322, width: width - 84, height: 56, borderColor: rgb(0.85, 0.91, 1), borderWidth: 1, color: lightBlue })
+  page1.drawText("Proyecto FCI 2025", {
+    x: 58,
+    y: height - 296,
+    size: 13,
+    font: bold,
+    color: blue,
+  })
+  page1.drawText("Resumen institucional automatizado", {
+    x: 58,
+    y: height - 315,
+    size: 9.2,
+    font: regular,
+    color: gray,
+  })
+
+  const page2 = pdf.addPage([595.28, 841.89])
+  let y = 805
+  const margin = 42
+
+  const sectionTitle = (title: string) => {
+    page2.drawText(title, { x: margin, y, size: 12.5, font: bold, color: blue })
+    y -= 8
+    page2.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 0.8, color: rgb(0.85, 0.91, 1) })
+    y -= 18
+  }
+
+  const paragraph = (text: string, size = 10.2) => {
+    const lines = wrapLines(text, 90)
+    for (const line of lines) {
+      page2.drawText(line, { x: margin, y, size, font: regular, color: rgb(0.12, 0.15, 0.18) })
+      y -= 14
+    }
+    y -= 2
+  }
+
+  const bullet = (text: string) => {
+    const lines = wrapLines(text, 84)
+    if (!lines.length) return
+    page2.drawText(`- ${lines[0]}`, { x: margin, y, size: 10.1, font: regular, color: rgb(0.12, 0.15, 0.18) })
+    y -= 14
+    for (const line of lines.slice(1)) {
+      page2.drawText(line, { x: margin + 12, y, size: 10.1, font: regular, color: rgb(0.12, 0.15, 0.18) })
+      y -= 14
+    }
+    y -= 2
+  }
+
+  sectionTitle("Resumen ejecutivo")
+  for (const line of ai.resumen) paragraph(line)
+
+  sectionTitle("Estado general")
+  const stats = [
+    `Avance del proyecto: ${data.proyecto.avance}%`,
+    `Cursos diseñados: ${data.cursos.disenados}`,
+    `Producción científica completada: ${data.produccion.completados} de ${data.produccion.meta}`,
+    `Validación del programa: ${data.validacion.encuestadas} participantes frente a una meta de ${data.validacion.meta}`,
+    `Respuestas de diagnóstico procesadas: ${data.diagnostico.respuestas}`,
+  ]
+  for (const item of stats) paragraph(item)
+
+  sectionTitle("Hallazgos clave")
+  for (const item of ai.hallazgos) bullet(item)
+
+  sectionTitle("Necesidades de formación priorizadas")
+  for (const item of data.necesidades.slice(0, 5)) bullet(`${item.necesidad}: ${item.valor}%`)
+
+  sectionTitle("Competencias promedio identificadas")
+  for (const item of data.competencias.slice(0, 5)) bullet(`${item.competencia}: ${item.valor}%`)
+
+  sectionTitle("Recomendaciones")
+  for (const item of ai.recomendaciones) bullet(item)
+
+  page2.drawLine({ start: { x: margin, y: 42 }, end: { x: width - margin, y: 42 }, thickness: 0.8, color: rgb(0.85, 0.91, 1) })
+  page2.drawText("Firma de revisión institucional: ____________________", {
+    x: margin,
+    y: 24,
+    size: 8.5,
+    font: regular,
+    color: gray,
+  })
+
+  return Buffer.from(await pdf.save())
 }
 
 export async function GET() {
   const data = await getProjectDashboardData()
-  const lines = [
-    "Informe ejecutivo del proyecto",
-    `Periodo: ${data.periodo}`,
-    "",
-    `Avance general del proyecto: ${data.proyecto.avance}%`,
-    `Oferta formativa: ${data.cursos.disenados} cursos disenados, ${data.cursos.enValidacion} en validacion y ${data.cursos.total} en total.`,
-    `Produccion cientifica: ${data.produccion.completados} productos completados de una meta de ${data.produccion.meta} (${data.produccion.cumplimiento}%).`,
-    `Validacion del programa: ${data.validacion.encuestadas} participantes registradas frente a una meta de ${data.validacion.meta}.`,
-    `Diagnostico consolidado: ${data.diagnostico.respuestas} respuestas procesadas para necesidades y competencias.`,
-    `Actividades proximas: ${data.actividades.length} acciones visibles en el seguimiento operativo.`,
-    "",
-    "Principales necesidades de formacion:",
-    ...data.necesidades.map((item) => `- ${item.necesidad}: ${item.valor}%`),
-    "",
-    "Competencias promedio identificadas:",
-    ...data.competencias.map((item) => `- ${item.competencia}: ${item.valor}%`),
-    "",
-    "Sintesis ejecutiva:",
-    "El dashboard consolida el avance del proyecto, la oferta formativa, la produccion cientifica y la validacion del programa en una sola lectura institucional.",
-    "Las necesidades de formacion se actualizan segun las respuestas registradas, por lo que los porcentajes varian a medida que aumenta la base de datos.",
-    "La produccion cientifica y las actividades del proyecto se sincronizan con las acciones proximas y con la linea de tiempo general para facilitar el seguimiento.",
-    "El diagnostico integra parroquia, sector economico, ingreso mensual y nivel de instruccion para sustentar decisiones de formacion mas precisas.",
-  ].flatMap((line) => (line ? wrapLines(line, 88) : [""]))
-
-  const pdf = buildPdf(lines)
+  const ai = await buildAiSummary(data)
+  const pdf = await buildPdf(data, ai)
 
   return new NextResponse(pdf, {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="reporte_resumen_${new Date().toISOString().slice(0, 10)}.pdf"`,
+      "Content-Disposition": `attachment; filename="informe_parcial_${new Date().toISOString().slice(0, 10)}.pdf"`,
     },
   })
 }

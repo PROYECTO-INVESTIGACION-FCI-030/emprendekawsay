@@ -28,13 +28,13 @@ export function CourseViewer({
       <div className="space-y-5 px-4 pb-10 sm:px-6">
         <Link href="/malla-formativa" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" />
-          Volver a Formacion
+          Volver a formación
         </Link>
 
         {modulos.length === 0 ? (
           <div className="rounded-md border border-dashed border-border px-6 py-12 text-center">
             <BookOpenCheck className="mx-auto h-7 w-7 text-muted-foreground" />
-            <p className="mt-3 font-medium text-foreground">El contenido estara disponible pronto</p>
+            <p className="mt-3 font-medium text-foreground">El contenido estará disponible pronto</p>
           </div>
         ) : (
           <div className="space-y-5">
@@ -43,7 +43,7 @@ export function CourseViewer({
               return (
                 <Card key={module.id}>
                   <CardHeader className="border-b border-border">
-                    <Badge variant="secondary" className="w-fit">Modulo {module.orden}</Badge>
+                    <Badge variant="secondary" className="w-fit">Módulo {module.orden}</Badge>
                     <CardTitle className="mt-2 text-xl">{module.titulo}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6 pt-6">
@@ -75,7 +75,7 @@ export function CourseViewer({
                                     {task.descripcion ? <p className="mt-2 text-sm text-muted-foreground">{task.descripcion}</p> : null}
                                     <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
                                       <CalendarClock className="h-3.5 w-3.5" />
-                                      Fecha limite: {formatDateTime(task.fecha_limite)}
+                                      Fecha límite: {formatDateTime(task.fecha_limite)}
                                     </p>
                                   </div>
                                   <TaskSubmissionButton idTarea={task.id} titulo={task.titulo} entrega={delivery} />
@@ -84,7 +84,7 @@ export function CourseViewer({
                                   <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm">
                                     <p className="flex items-center gap-2 font-semibold text-emerald-900">
                                       <GraduationCap className="h-4 w-4" />
-                                      Calificacion: {delivery.calificacion.calificacion} / 10
+                                      Calificación: {delivery.calificacion.calificacion} / 10
                                     </p>
                                     {delivery.calificacion.retroalimentacion ? (
                                       <p className="mt-1 text-emerald-800">{delivery.calificacion.retroalimentacion}</p>

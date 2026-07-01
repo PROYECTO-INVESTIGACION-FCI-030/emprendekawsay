@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import { registrarHistorialCliente } from "@/lib/historial-client"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -81,12 +82,7 @@ export default function LoginPage() {
       const { data: sessionData } = await supabase.auth.getSession()
       const userId = sessionData.session?.user.id
       if (userId) {
-        fetch("/api/login-history", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, ruta: "/" }),
-          keepalive: true,
-        }).catch(() => null)
+        await registrarHistorialCliente({ ruta: "/", accion: "inicio_sesion", paginaNombre: "Dashboard" })
       }
       router.push("/")
     } catch (error: unknown) {

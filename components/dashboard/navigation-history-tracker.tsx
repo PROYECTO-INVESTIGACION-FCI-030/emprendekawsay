@@ -41,22 +41,26 @@ export function NavigationHistoryTracker() {
     lastSentRef.current = signature
 
     const registrar = async () => {
-      const supabase = createClient()
-      const { data } = await supabase.auth.getUser()
-      const userId = data.user?.id
-      if (!userId) return
+      try {
+        const supabase = createClient()
+        const { data } = await supabase.auth.getUser()
+        const userId = data.user?.id
+        if (!userId) return
 
-      fetch("/api/login-history", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          ruta,
-          accion: ruta === "/" ? "ingreso_dashboard" : "navegacion_pagina",
-          pagina_nombre: obtenerNombrePaginaPorRuta(ruta),
-        }),
-        keepalive: true,
-      }).catch(() => null)
+        await fetch("/api/login-history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            ruta,
+            accion: ruta === "/" ? "ingreso_dashboard" : "navegacion_pagina",
+            pagina_nombre: obtenerNombrePaginaPorRuta(ruta),
+          }),
+          keepalive: true,
+        })
+      } catch {
+        return
+      }
     }
 
     const timeout = window.setTimeout(() => {

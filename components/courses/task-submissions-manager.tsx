@@ -129,7 +129,22 @@ export function TaskSubmissionsManager({
                 <tr key={delivery.id}>
                   <td className="px-4 py-3"><p className="font-medium text-foreground">{delivery.participante?.nombre_completo ?? "Sin nombre"}</p><p className="text-xs text-muted-foreground">{delivery.participante?.email}</p></td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{formatDateTime(delivery.fecha_entrega)}</td>
-                  <td className="px-4 py-3">{delivery.archivo_url ? <a href={delivery.archivo_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline"><FileText className="h-4 w-4" />{delivery.archivo_nombre}</a> : <span className="text-muted-foreground">No disponible</span>}</td>
+                  <td className="px-4 py-3">
+                    {delivery.archivo_url ? (
+                      <a
+                        href={delivery.archivo_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline"
+                        title={delivery.archivo_nombre}
+                      >
+                        <FileText className="h-4 w-4 shrink-0" />
+                        <span className="whitespace-normal break-words">{delivery.archivo_nombre}</span>
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground">No disponible</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">{delivery.calificacion ? <span className="font-semibold text-foreground">{delivery.calificacion.calificacion} / 10</span> : <Badge variant="secondary">Sin calificar</Badge>}</td>
                   <td className="px-4 py-3 text-right"><Button size="sm" variant="outline" onClick={() => openGrade(delivery)}><GraduationCap className="mr-1.5 h-4 w-4" />{delivery.calificacion ? "Editar nota" : "Calificar"}</Button></td>
                 </tr>

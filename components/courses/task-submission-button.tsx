@@ -64,11 +64,13 @@ export function TaskSubmissionButton({
           <form action={submit} className="space-y-4">
             <input type="hidden" name="id_tarea" value={idTarea} />
             {entrega ? (
-              <div className="flex items-center gap-3 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+              <div className="flex items-start gap-3 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
                 <FileText className="h-5 w-5 shrink-0" />
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="font-medium">PDF entregado</p>
-                  <p className="truncate text-xs">{entrega.archivo_nombre}</p>
+                  <p className="break-words text-xs leading-5" title={entrega.archivo_nombre}>
+                    {entrega.archivo_nombre}
+                  </p>
                 </div>
               </div>
             ) : null}

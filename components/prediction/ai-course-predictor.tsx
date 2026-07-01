@@ -12,10 +12,12 @@ export function AiCoursePredictor({
   predictions,
   profile,
   source,
+  sourceReason,
 }: {
   predictions: CoursePrediction[]
   profile: CoursePredictionProfile
   source: "gemini" | "fallback"
+  sourceReason?: string
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -81,6 +83,7 @@ export function AiCoursePredictor({
             <span className={cn("h-2.5 w-2.5 rounded-full", source === "gemini" ? "bg-emerald-300" : "bg-amber-300")} />
             {source === "gemini" ? "Gemini activo" : "Fallback activo"}
           </div>
+          {sourceReason ? <p className="text-xs text-blue-100/90">{sourceReason}</p> : null}
         </div>
       </section>
 

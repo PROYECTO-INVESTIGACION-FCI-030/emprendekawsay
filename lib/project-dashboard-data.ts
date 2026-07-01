@@ -23,7 +23,7 @@ export type ProjectDashboardData = {
     porcentaje: number
   }
   tiempo: { fecha: string; planificado: number; ejecutado: number; fuente?: string }[]
-  produccionPorInvestigador: { investigador: string; planificado: number; ejecutado: number }[]
+  produccionPorInvestigador: { investigador: string; altoImpacto: number; regional: number; total: number }[]
   necesidades: { necesidad: string; valor: number }[]
   competencias: { competencia: string; valor: number }[]
   diagnostico: {
@@ -80,9 +80,9 @@ export const fallbackProjectDashboardData: ProjectDashboardData = {
     { fecha: "Jun 2028", planificado: 95, ejecutado: 66, fuente: "Científica" },
   ],
   produccionPorInvestigador: [
-    { investigador: "Raquel Vera", planificado: 5, ejecutado: 3 },
-    { investigador: "Mixi Segura", planificado: 4, ejecutado: 4 },
-    { investigador: "Nallan Navas", planificado: 3, ejecutado: 3 },
+    { investigador: "Raquel Vera", altoImpacto: 5, regional: 3, total: 8 },
+    { investigador: "Mixi Segura", altoImpacto: 4, regional: 4, total: 8 },
+    { investigador: "Nallan Navas", altoImpacto: 3, regional: 3, total: 6 },
   ],
   necesidades: [
     { necesidad: "Marketing digital", valor: 0 },

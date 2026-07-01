@@ -37,6 +37,7 @@ export type CoursePredictionResult = {
   cursos: CoursePrediction[]
   perfil: CoursePredictionProfile
   source: "gemini" | "fallback"
+  sourceReason?: string
 }
 
 type SurveyRow = Record<string, string | null>
@@ -193,7 +194,7 @@ function normalizeGeminiSuggestions(value: unknown): GeminiCourseSuggestion[] {
 
 async function getGeminiSuggestions(rows: SurveyRow[]) {
   const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) return []
+  if (!apiKey) return { suggestions: [], reason: "Falta GEMINI_API_KEY en el entorno." }
 
   const summary = buildCriticalNeedSummary(rows)
   const prompt = [
@@ -209,7 +210,7 @@ async function getGeminiSuggestions(rows: SurveyRow[]) {
   ].join("\n")
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -221,16 +222,21 @@ async function getGeminiSuggestions(rows: SurveyRow[]) {
       }),
     })
 
-    if (!response.ok) return []
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "")
+      return { suggestions: [], reason: `Gemini respondió ${response.status}. ${errorText || "Sin detalle."}`.trim() }
+    }
 
     const payload = await response.json()
     const text = payload?.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text ?? "").join("") ?? ""
-    if (!text) return []
+    if (!text) return { suggestions: [], reason: "Gemini no devolvió texto utilizable." }
 
     const parsed = JSON.parse(text)
-    return normalizeGeminiSuggestions(parsed)
+    const suggestions = normalizeGeminiSuggestions(parsed)
+    if (!suggestions.length) return { suggestions: [], reason: "Gemini devolvió JSON, pero sin sugerencias válidas." }
+    return { suggestions, reason: "Gemini respondió correctamente." }
   } catch {
-    return []
+    return { suggestions: [], reason: "No se pudo interpretar la respuesta de Gemini." }
   }
 }
 
@@ -370,9 +376,9 @@ export async function getCoursePredictions(): Promise<CoursePredictionResult> {
     } satisfies CoursePrediction
   })
 
-  const geminiSuggestions = await getGeminiSuggestions(rows)
-  const source: "gemini" | "fallback" = geminiSuggestions.length ? "gemini" : "fallback"
-  const suggested = (geminiSuggestions.length ? geminiSuggestions : [])
+  const geminiResult = await getGeminiSuggestions(rows)
+  const source: "gemini" | "fallback" = geminiResult.suggestions.length ? "gemini" : "fallback"
+  const suggested = (geminiResult.suggestions.length ? geminiResult.suggestions : [])
     .map((item, index) => {
       const fallback = byTemplate[index] ?? byTemplate[0]
       if (!fallback) return null
@@ -439,5 +445,6 @@ export async function getCoursePredictions(): Promise<CoursePredictionResult> {
     cursos: result.slice(0, 6),
     perfil,
     source,
+    sourceReason: geminiResult.reason,
   }
 }

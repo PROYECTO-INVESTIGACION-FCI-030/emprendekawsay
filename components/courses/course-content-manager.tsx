@@ -7,25 +7,16 @@ import {
   CalendarClock,
   Eye,
   EyeOff,
-  GraduationCap,
   Pencil,
   Plus,
   Trash2,
   Users,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { RichTextEditor } from "@/components/courses/rich-text-editor"
 import { Badge } from "@/components/ui/badge"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -43,12 +34,21 @@ import { cn } from "@/lib/utils"
 
 function localDateTimeInput(iso: string) {
   const date = new Date(iso)
-  const pad = (value: number) => String(value).padStart(2, "0")
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Guayaquil",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date)
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value])) as Record<string, string>
+  return `${value.year}-${value.month}-${value.day}T${value.hour}:${value.minute}`
 }
 
 function formatDateTime(iso: string) {
-  return new Intl.DateTimeFormat("es-EC", { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso))
+  return new Intl.DateTimeFormat("es-EC", { dateStyle: "medium", timeStyle: "short", timeZone: "America/Guayaquil" }).format(new Date(iso))
 }
 
 export function CourseContentManager({
@@ -56,7 +56,6 @@ export function CourseContentManager({
   modulos,
   tareas,
   participantes,
-  emprendedoras,
 }: {
   curso: Curso
   modulos: ModuloCurso[]
@@ -78,7 +77,6 @@ export function CourseContentManager({
   const [taskTitle, setTaskTitle] = useState("")
   const [taskDescription, setTaskDescription] = useState("")
   const [taskDeadline, setTaskDeadline] = useState("")
-  const assignedIds = new Set(participantes.map((participante) => participante.id_participante))
 
   function run(action: () => Promise<CursoActionResult>, close?: () => void) {
     startTransition(async () => {
@@ -110,6 +108,8 @@ export function CourseContentManager({
     setTaskDialog(true)
   }
 
+  const assignedIds = new Set(participantes.map((participante) => participante.id_participante))
+
   return (
     <div className="space-y-6 px-4 pb-10 sm:px-6">
       <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-start sm:justify-between">
@@ -127,116 +127,53 @@ export function CourseContentManager({
         </div>
         <Button onClick={() => openModule()}>
           <Plus className="mr-1.5 h-4 w-4" />
-          Crear modulo
+          Crear módulo
         </Button>
       </div>
 
       {result?.message ? (
-        <div className={cn(
-          "rounded-md border px-4 py-3 text-sm",
-          result.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-destructive/30 bg-destructive/10 text-destructive",
-        )}>
+        <div className={cn("rounded-md border px-4 py-3 text-sm", result.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-destructive/30 bg-destructive/10 text-destructive")}>
           {result.message}
         </div>
       ) : null}
 
-      <section>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Users className="h-5 w-5 text-primary" />
-              Emprendedoras asignadas al curso
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form action={(data) => run(() => guardarParticipantesCurso(data))} className="space-y-4">
-              <input type="hidden" name="id_curso" value={curso.id} />
-              {emprendedoras.length === 0 ? (
-                <p className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-                  No hay usuarias con rol Mujer emprendedora para asignar.
-                </p>
-              ) : (
-                <div className="grid max-h-80 gap-2 overflow-y-auto rounded-md border border-border p-3 md:grid-cols-2">
-                  {emprendedoras.map((emprendedora) => (
-                    <label key={emprendedora.id} className="flex items-start gap-2 rounded-md border border-border px-3 py-2 text-sm">
-                      <input
-                        type="checkbox"
-                        name="participantes"
-                        value={emprendedora.id}
-                        defaultChecked={assignedIds.has(emprendedora.id)}
-                        className="mt-1"
-                      />
-                      <span>
-                        <span className="block font-medium text-foreground">{emprendedora.nombre_completo ?? "Sin nombre"}</span>
-                        <span className="block text-xs text-muted-foreground">{emprendedora.email}</span>
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              )}
-              <Button type="submit" disabled={pending || emprendedoras.length === 0}>
-                {pending ? "Guardando..." : "Guardar participantes"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section>
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-foreground">Modulos y contenido</h3>
-          <p className="text-sm text-muted-foreground">Organiza los textos y asigna las actividades dentro de cada modulo.</p>
+      <section className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-lg font-semibold text-foreground">Módulos y tareas</h3>
         </div>
 
         {modulos.length === 0 ? (
-          <div className="rounded-md border border-dashed border-border px-6 py-12 text-center">
-            <GraduationCap className="mx-auto h-7 w-7 text-muted-foreground" />
-            <p className="mt-3 font-medium text-foreground">Este curso aun no tiene modulos</p>
-            <p className="mt-1 text-sm text-muted-foreground">Crea el primer modulo para agregar contenido y tareas.</p>
+          <div className="rounded-md border border-dashed border-border px-6 py-12 text-center text-sm text-muted-foreground">
+            Todavía no hay módulos creados.
           </div>
         ) : (
           <div className="space-y-4">
             {modulos.map((module) => {
               const moduleTasks = tareas.filter((task) => task.id_modulo === module.id)
               return (
-                <Card key={module.id} className={!module.visible ? "opacity-70" : undefined}>
+                <Card key={module.id}>
                   <CardHeader className="border-b border-border">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="secondary">Modulo {module.orden}</Badge>
-                          <Badge variant={module.visible ? "default" : "secondary"}>{module.visible ? "Publicado" : "Oculto"}</Badge>
-                        </div>
-                        <CardTitle className="mt-2 text-lg">{module.titulo}</CardTitle>
+                        <Badge variant="secondary" className="w-fit">Módulo {module.orden}</Badge>
+                        <CardTitle className="mt-2 text-xl">{module.titulo}</CardTitle>
                       </div>
                       <div className="flex gap-1">
-                        <Button size="icon-sm" variant="ghost" title={module.visible ? "Ocultar modulo" : "Publicar modulo"} onClick={() => run(() => cambiarVisibilidadModulo(module.id, curso.id, !module.visible))}>
+                        <Button size="icon-sm" variant="ghost" title={module.visible ? "Ocultar módulo" : "Publicar módulo"} onClick={() => run(() => cambiarVisibilidadModulo(module.id, curso.id, !module.visible))}>
                           {module.visible ? <EyeOff /> : <Eye />}
                         </Button>
-                        <Button size="icon-sm" variant="ghost" title="Editar modulo" onClick={() => openModule(module)}><Pencil /></Button>
-                        <Button
-                          size="icon-sm"
-                          variant="destructive"
-                          title="Eliminar modulo"
-                          onClick={() => {
-                            if (window.confirm(`Eliminar ${module.titulo} y sus tareas?`)) {
-                              run(() => eliminarModulo(module.id, curso.id))
-                            }
-                          }}
-                        >
-                          <Trash2 />
-                        </Button>
+                        <Button size="icon-sm" variant="ghost" title="Editar módulo" onClick={() => openModule(module)}><Pencil /></Button>
+                        <Button size="icon-sm" variant="destructive" title="Eliminar módulo" onClick={() => {
+                          if (window.confirm(`Eliminar el módulo ${module.titulo}?`)) run(() => eliminarModulo(module.id, curso.id))
+                        }}><Trash2 /></Button>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-5 pt-5">
                     {module.contenido_html ? (
-                      <div
-                        className="text-sm leading-7 text-foreground [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:mt-3 [&_h3]:text-lg [&_h3]:font-semibold [&_ol]:ml-6 [&_ol]:list-decimal [&_ul]:ml-6 [&_ul]:list-disc [&_blockquote]:border-l-4 [&_blockquote]:border-border [&_blockquote]:pl-4"
-                        dangerouslySetInnerHTML={{ __html: module.contenido_html }}
-                      />
+                      <div className="text-sm leading-7 text-foreground" dangerouslySetInnerHTML={{ __html: module.contenido_html }} />
                     ) : (
-                      <p className="text-sm text-muted-foreground">Este modulo aun no tiene texto.</p>
+                      <p className="text-sm text-muted-foreground">Este módulo aún no tiene texto.</p>
                     )}
 
                     <div className="border-t border-border pt-4">
@@ -247,8 +184,9 @@ export function CourseContentManager({
                           Crear tarea
                         </Button>
                       </div>
+
                       {moduleTasks.length === 0 ? (
-                        <p className="rounded-md bg-muted/40 px-4 py-3 text-sm text-muted-foreground">No hay tareas en este modulo.</p>
+                        <p className="rounded-md bg-muted/40 px-4 py-3 text-sm text-muted-foreground">No hay tareas en este módulo.</p>
                       ) : (
                         <div className="divide-y divide-border rounded-md border border-border">
                           {moduleTasks.map((task) => (
@@ -267,7 +205,7 @@ export function CourseContentManager({
                                 <div className="flex flex-wrap gap-1">
                                   <Link
                                     href={`/diseno-cursos/${curso.id}/tareas/${task.id}`}
-                                    className={buttonVariants({ variant: "outline", size: "sm" })}
+                                    className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/40"
                                   >
                                     <Users className="mr-1.5 h-4 w-4" />
                                     Ver entregas
@@ -295,42 +233,51 @@ export function CourseContentManager({
       </section>
 
       <Dialog open={moduleDialog} onOpenChange={setModuleDialog}>
-        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editingModule ? "Editar modulo" : "Crear modulo"}</DialogTitle>
-            <DialogDescription>Escribe y da formato al contenido que vera la emprendedora.</DialogDescription>
+            <DialogTitle>{editingModule ? "Editar módulo" : "Crear módulo"}</DialogTitle>
+            <DialogDescription>Escribe y da formato al contenido que verá la emprendedora.</DialogDescription>
           </DialogHeader>
           <form key={editingModule?.id ?? "new-module"} className="space-y-4" action={(data) => run(() => guardarModulo(data), () => setModuleDialog(false))}>
             <input type="hidden" name="id" value={editingModule?.id ?? ""} />
             <input type="hidden" name="id_curso" value={curso.id} />
             <input type="hidden" name="contenido_html" value={moduleContent} />
             <div className="grid gap-4 sm:grid-cols-[1fr_120px]">
-              <label className="block space-y-1.5 text-sm font-medium"><span>Titulo</span><Input name="titulo" value={moduleTitle} onChange={(event) => setModuleTitle(event.target.value)} required /></label>
+              <label className="block space-y-1.5 text-sm font-medium"><span>Título</span><Input name="titulo" value={moduleTitle} onChange={(event) => setModuleTitle(event.target.value)} required /></label>
               <label className="block space-y-1.5 text-sm font-medium"><span>Orden</span><Input name="orden" type="number" min="1" value={moduleOrder} onChange={(event) => setModuleOrder(event.target.value)} required /></label>
             </div>
-            <div className="space-y-1.5"><p className="text-sm font-medium">Contenido</p><RichTextEditor key={editingModule?.id ?? "new-editor"} value={moduleContent} onChange={setModuleContent} /></div>
-            {!result?.ok && result?.message ? <p className="text-sm text-destructive">{result.message}</p> : null}
-            <DialogFooter><Button type="button" variant="outline" onClick={() => setModuleDialog(false)}>Cancelar</Button><Button type="submit" disabled={pending}>{pending ? "Guardando..." : "Guardar modulo"}</Button></DialogFooter>
+            <label className="block space-y-1.5 text-sm font-medium">
+              <span>Contenido</span>
+              <Textarea name="contenido_preview" value={moduleContent} onChange={(event) => setModuleContent(event.target.value)} rows={8} placeholder="Escribe el contenido del módulo" />
+            </label>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setModuleDialog(false)}>Cancelar</Button>
+              <Button type="submit" disabled={pending}>{pending ? "Guardando..." : "Guardar módulo"}</Button>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
       <Dialog open={taskDialog} onOpenChange={setTaskDialog}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editingTask ? "Editar tarea" : "Crear tarea"}</DialogTitle><DialogDescription>La tarea aparecera dentro del modulo y en la linea de tiempo.</DialogDescription></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{editingTask ? "Editar tarea" : "Crear tarea"}</DialogTitle>
+            <DialogDescription>La tarea aparecerá dentro del módulo y en la línea de tiempo.</DialogDescription>
+          </DialogHeader>
           <form key={editingTask?.id ?? `new-${selectedModuleId}`} className="space-y-4" action={(data) => run(() => guardarTarea(data), () => setTaskDialog(false))}>
             <input type="hidden" name="id" value={editingTask?.id ?? ""} />
             <input type="hidden" name="id_curso" value={curso.id} />
             <input type="hidden" name="id_modulo" value={selectedModuleId} />
-            <label className="block space-y-1.5 text-sm font-medium"><span>Titulo</span><Input name="titulo" value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} required /></label>
-            <label className="block space-y-1.5 text-sm font-medium"><span>Descripcion</span><Textarea name="descripcion" value={taskDescription} onChange={(event) => setTaskDescription(event.target.value)} /></label>
-            <label className="block space-y-1.5 text-sm font-medium"><span>Fecha y hora limite</span><Input name="fecha_limite" type="datetime-local" value={taskDeadline} onChange={(event) => setTaskDeadline(event.target.value)} required /></label>
-            {!result?.ok && result?.message ? <p className="text-sm text-destructive">{result.message}</p> : null}
-            <DialogFooter><Button type="button" variant="outline" onClick={() => setTaskDialog(false)}>Cancelar</Button><Button type="submit" disabled={pending}>{pending ? "Guardando..." : "Guardar tarea"}</Button></DialogFooter>
+            <label className="block space-y-1.5 text-sm font-medium"><span>Título</span><Input name="titulo" value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} required /></label>
+            <label className="block space-y-1.5 text-sm font-medium"><span>Descripción</span><Textarea name="descripcion" value={taskDescription} onChange={(event) => setTaskDescription(event.target.value)} /></label>
+            <label className="block space-y-1.5 text-sm font-medium"><span>Fecha y hora límite</span><Input name="fecha_limite" type="datetime-local" value={taskDeadline} onChange={(event) => setTaskDeadline(event.target.value)} required /></label>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setTaskDialog(false)}>Cancelar</Button>
+              <Button type="submit" disabled={pending}>{pending ? "Guardando..." : "Guardar tarea"}</Button>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
-
     </div>
   )
 }

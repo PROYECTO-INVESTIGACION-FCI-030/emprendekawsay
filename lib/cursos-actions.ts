@@ -20,6 +20,17 @@ function capitalizarPrimera(value: string) {
   return value ? value.charAt(0).toUpperCase() + value.slice(1) : value
 }
 
+function datetimeLocalToIsoGuayaquil(value: string) {
+  if (!value) return null
+  const [datePart, timePart] = value.split("T")
+  if (!datePart || !timePart) return null
+  const [year, month, day] = datePart.split("-").map(Number)
+  const [hours, minutes] = timePart.split(":").map(Number)
+  if ([year, month, day, hours, minutes].some((item) => Number.isNaN(item))) return null
+  const utcMillis = Date.UTC(year, month - 1, day, hours + 5, minutes, 0, 0)
+  return new Date(utcMillis).toISOString()
+}
+
 function revalidarCursos() {
   revalidatePath("/")
   revalidatePath("/diseno-cursos")

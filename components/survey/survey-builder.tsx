@@ -62,8 +62,8 @@ export function SurveyBuilder({ surveys, compact = false }: { surveys: DynamicSu
       {publishedSurvey ? (
         <div className="space-y-4">
           <Card className="border-border bg-card">
-            <CardContent className="space-y-4 pt-6">
-              <form action={saveSurvey} className="space-y-4">
+          <CardContent className="space-y-4 pt-6">
+              <form action={async (formData) => { await saveSurvey(formData) }} className="space-y-4">
                 <input type="hidden" name="id" value={publishedSurvey.id} />
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="space-y-1.5 text-sm font-medium">
@@ -90,7 +90,7 @@ export function SurveyBuilder({ surveys, compact = false }: { surveys: DynamicSu
                   <p className="mt-1 text-sm text-muted-foreground">{block.descripcion ?? "Sin descripción"}</p>
                 </div>
 
-                <form action={saveSurveyBlock} className="space-y-4 rounded-md border border-dashed border-sky-300 bg-sky-50 p-4">
+                <form action={async (formData) => { await saveSurveyBlock(formData) }} className="space-y-4 rounded-md border border-dashed border-sky-300 bg-sky-50 p-4">
                   <input type="hidden" name="encuesta_id" value={publishedSurvey.id} />
                   <div className="grid gap-3 md:grid-cols-[1.2fr_1fr_auto]">
                     <Input name="titulo" placeholder="Nuevo bloque" />
@@ -105,7 +105,7 @@ export function SurveyBuilder({ surveys, compact = false }: { surveys: DynamicSu
 
                 <div className="space-y-3">
                   {block.preguntas.map((question) => (
-                    <form key={question.id} action={updateSurveyQuestion} className="space-y-3 rounded-md border border-border bg-white p-4">
+                    <form key={question.id} action={async (formData) => { await updateSurveyQuestion(formData) }} className="space-y-3 rounded-md border border-border bg-white p-4">
                       <input type="hidden" name="id" value={question.id} />
                       <div className="grid gap-3 md:grid-cols-[1.4fr_0.7fr_0.3fr]">
                         <label className="space-y-1.5 text-sm font-medium">
@@ -153,7 +153,7 @@ export function SurveyBuilder({ surveys, compact = false }: { surveys: DynamicSu
                           Guardar cambios
                         </button>
                         <button
-                          formAction={deleteSurveyQuestion.bind(null, question.id)}
+                          formAction={async () => { await deleteSurveyQuestion(question.id) }}
                           type="submit"
                           className="inline-flex items-center gap-2 rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
                         >

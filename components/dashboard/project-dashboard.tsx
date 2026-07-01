@@ -1,14 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import {
-  BarChart3,
-  BookOpen,
-  CalendarDays,
-  ClipboardList,
-  FileText,
-  TrendingUp,
-} from "lucide-react"
+import { BarChart3, BookOpen, ClipboardList, FileText, TrendingUp } from "lucide-react"
 import {
   Bar,
   BarChart,
@@ -315,12 +308,6 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
           <h2 className="text-2xl font-semibold text-foreground">Dashboard</h2>
           <p className="text-sm text-muted-foreground">Resumen general del proyecto</p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground">
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
-            <span>{data.periodo}</span>
-          </div>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -368,7 +355,7 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-3">
-            <CardTitle className="text-base">Producción por Investigador</CardTitle>
+              <CardTitle className="text-base">Producción por Investigador</CardTitle>
             <ChartFilter
               label="Filtrar producción por investigador"
               value={productionFilter}

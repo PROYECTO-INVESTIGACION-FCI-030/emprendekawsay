@@ -33,6 +33,7 @@ type DashboardRow = {
   adapta_productos?: string | null
   dispositivo_internet?: string | null
   usa_apps_digitales?: string | null
+  apps_usadas?: string | null
   usa_pagos_digitales?: string | null
   dificultad_tecnologia?: string | null
   incorpora_cultura?: string | null
@@ -366,19 +367,15 @@ function getProductionActivities(products: Awaited<ReturnType<typeof getProducti
       fecha: product.estado === "publicado" ? formatPublishedDate(product.fecha_publicacion) : formatActivityDate(product.fecha_objetivo),
       fechaOrden: product.estado === "publicado" ? toSortableIso(product.fecha_publicacion) : toSortableDate(product.fecha_objetivo),
       estado:
-        product.estado === "publicado"
+      product.estado === "publicado"
           ? "Publicado"
-          : product.estado === "en_proceso" ||
-              product.estado === "en_revision" ||
-              product.estado === "en_redaccion"
+          : product.estado === "en_revision" || product.estado === "en_redaccion"
             ? "En proceso"
             : "Programado",
       color:
         product.estado === "publicado"
           ? "bg-emerald-500"
-          : product.estado === "en_proceso" ||
-              product.estado === "en_revision" ||
-              product.estado === "en_redaccion"
+          : product.estado === "en_revision" || product.estado === "en_redaccion"
             ? "bg-amber-500"
             : "bg-blue-500",
       fuente: "Científica",
