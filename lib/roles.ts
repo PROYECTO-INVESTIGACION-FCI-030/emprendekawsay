@@ -5,7 +5,7 @@ export const ROLES_LABEL: Record<string, string> = {
   investigadora: "Investigadora",
   formadora: "Formadora",
   mujer_emprendedora: "Mujer emprendedora",
-  institucion_aliada: "Institucion aliada",
+  institucion_aliada: "Institución aliada",
 }
 
 export const ROLES_INVERSO: Record<string, string> = {
@@ -15,8 +15,8 @@ export const ROLES_INVERSO: Record<string, string> = {
   Investigadora: "investigadora",
   Formadora: "formadora",
   "Mujer emprendedora": "mujer_emprendedora",
+  "Institución aliada": "institucion_aliada",
   "Institucion aliada": "institucion_aliada",
-  "InstituciÃ³n aliada": "institucion_aliada",
 }
 
 export function normalizarRol(rol: string) {

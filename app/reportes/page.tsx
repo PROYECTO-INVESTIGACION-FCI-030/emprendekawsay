@@ -9,45 +9,47 @@ export default async function ReportesPage() {
 
   return (
     <AppShell>
-      <Toolbar titulo="Reportes" descripcion="Informes textuales y exportación de evidencia" showControls={false} />
+      <Toolbar titulo="Reportes" descripcion="Informes ejecutivos y exportación de evidencia del proyecto" showControls={false} />
       <div className="space-y-4 px-4 pb-8 sm:px-6">
         <section className="rounded-md border border-border bg-card">
-          <header className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <div>
-              <h3 className="text-base font-semibold text-foreground">Resumen del dashboard</h3>
-              <p className="text-sm text-muted-foreground">
-                Un informe escrito con los datos más importantes del proyecto, pensado para descargar en PDF y compartir sin
-                tantas gráficas.
-              </p>
-            </div>
+          <header className="border-b border-border px-4 py-4 sm:px-6">
+            <h3 className="text-base font-semibold text-foreground">Resumen ejecutivo del dashboard</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Genera un documento formal con lectura analítica, métricas clave y trazabilidad de los indicadores
+              principales del proyecto.
+            </p>
           </header>
+
           <div className="grid gap-4 px-4 py-5 md:grid-cols-2 xl:grid-cols-4 sm:px-6">
             <article className="rounded-md border border-border bg-background p-4">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Avance</p>
               <p className="mt-2 text-2xl font-semibold text-foreground">{data.proyecto.avance}%</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                El proyecto se encuentra en desarrollo continuo desde {data.proyecto.inicio} hasta {data.proyecto.fin}.
+                Seguimiento acumulado del proyecto entre {data.proyecto.inicio} y {data.proyecto.fin}.
               </p>
             </article>
+
             <article className="rounded-md border border-border bg-background p-4">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Cursos</p>
               <p className="mt-2 text-2xl font-semibold text-foreground">{data.cursos.disenados}</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                Cursos diseñados con seguimiento de validación y estado de publicación.
+                Cursos diseñados con control de validación y estado de publicación.
               </p>
             </article>
+
             <article className="rounded-md border border-border bg-background p-4">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Producción científica</p>
               <p className="mt-2 text-2xl font-semibold text-foreground">{data.produccion.completados}</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                Productos completados sobre una meta de {data.produccion.meta}, con avance medible y fechas reales.
+                Productos ejecutados sobre una meta de {data.produccion.meta}, con fechas y trazabilidad operativa.
               </p>
             </article>
+
             <article className="rounded-md border border-border bg-background p-4">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Validación</p>
               <p className="mt-2 text-2xl font-semibold text-foreground">{data.validacion.encuestadas}</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                Participantes registradas en el programa frente a una meta de {data.validacion.meta}.
+                Participantes registradas frente a una meta de {data.validacion.meta}.
               </p>
             </article>
           </div>
@@ -55,22 +57,24 @@ export default async function ReportesPage() {
 
         <section className="grid gap-4 xl:grid-cols-1">
           <article className="rounded-md border border-border bg-card p-4 sm:p-6">
-            <h3 className="text-base font-semibold text-foreground">Descargas disponibles</h3>
+            <h3 className="text-base font-semibold text-foreground">Exportaciones disponibles</h3>
             <div className="mt-4 space-y-3">
               <div className="rounded-md border border-border bg-background p-4">
                 <p className="font-medium text-foreground">Encuesta completa</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Exporta el consolidado completo de respuestas de la encuesta en Excel, con todas las preguntas y registros
-                  disponibles.
+                  Exporta el consolidado total de respuestas en Excel, con todas las preguntas y filas almacenadas en la
+                  base de datos.
                 </p>
                 <div className="mt-3">
                   <EncuestaExportButton />
                 </div>
               </div>
+
               <div className="rounded-md border border-border bg-background p-4">
-                <p className="font-medium text-foreground">Resumen PDF</p>
+                <p className="font-medium text-foreground">Informe ejecutivo en PDF</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Descarga un documento breve con el mismo contenido textual del dashboard, sin saturarlo de gráficas.
+                  Descarga un informe institucional con portada, síntesis del dashboard, lectura diagnóstica y detalle
+                  narrativo de los indicadores del proyecto.
                 </p>
                 <div className="mt-3">
                   <ResumenPdfButton />

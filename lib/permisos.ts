@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/admin"
+﻿import { createAdminClient } from "@/lib/supabase/admin"
 
 export type PermisoPagina = {
   codigo: string
@@ -13,10 +13,10 @@ export const PAGINAS_PERMITIDAS: PermisoPagina[] = [
   { codigo: "proyecto", nombre: "Proyecto", ruta: "/proyecto", modulo: "proyecto", descripcion: "Información y avances del proyecto" },
   { codigo: "diagnostico", nombre: "Diagnóstico (Encuesta)", ruta: "/diagnostico", modulo: "diagnostico", descripcion: "Encuesta inicial y resultados" },
   { codigo: "analitica", nombre: "Analítica de Necesidades", ruta: "/analitica", modulo: "analitica", descripcion: "Análisis de resultados y brechas" },
-  { codigo: "prediccion", nombre: "Predicción de Cursos", ruta: "/prediccion", modulo: "prediccion", descripcion: "Sugerencia de cursos según diagnóstico" },
-  { codigo: "diseno_cursos", nombre: "Diseño de Cursos", ruta: "/diseno-cursos", modulo: "diseno-cursos", descripcion: "Creación y edición de cursos" },
+  { codigo: "prediccion", nombre: "PredicciÃ³n de Cursos", ruta: "/prediccion", modulo: "prediccion", descripcion: "Sugerencia de cursos según diagnóstico" },
+  { codigo: "diseno_cursos", nombre: "DiseÃ±o de Cursos", ruta: "/diseno-cursos", modulo: "diseno-cursos", descripcion: "Creación y edición de cursos" },
   { codigo: "malla_formativa", nombre: "Malla Formativa", ruta: "/malla-formativa", modulo: "malla-formativa", descripcion: "Ruta formativa del programa" },
-  { codigo: "validacion", nombre: "Validación (Encuesta)", ruta: "/validacion", modulo: "validacion", descripcion: "Encuesta de validación del programa" },
+  { codigo: "validacion", nombre: "Validación (Encuesta)", ruta: "/validacion", modulo: "validacion", descripcion: "Encuesta de validaciÃ³n del programa" },
   { codigo: "produccion_cientifica", nombre: "Producción Científica", ruta: "/produccion", modulo: "produccion", descripcion: "Gestión de publicaciones" },
   { codigo: "avance", nombre: "Avance del Proyecto", ruta: "/avance", modulo: "avance", descripcion: "Indicadores y seguimiento del avance" },
   { codigo: "reportes", nombre: "Reportes", ruta: "/reportes", modulo: "reportes", descripcion: "Exportación y reportes del sistema" },
@@ -111,3 +111,4 @@ export async function obtenerHistorialIngresos(limit = 12) {
     accion: obtenerAccionPorRuta(item.accion, item.ruta),
   }))
 }
+

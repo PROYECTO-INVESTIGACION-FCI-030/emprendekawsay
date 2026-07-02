@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 
 type ActivityItem = {
   id: string
@@ -21,19 +22,32 @@ function formatDate(value: string) {
   return date.toLocaleDateString("es-EC", { day: "2-digit", month: "2-digit", year: "numeric" })
 }
 
+function getStatusClasses(estado: string) {
+  if (estado === "Ejecutada") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700"
+  }
+  if (estado === "Completada") {
+    return "border-sky-200 bg-sky-50 text-sky-700"
+  }
+  if (estado === "En proceso" || estado === "En redacción" || estado === "En revisión") {
+    return "border-amber-200 bg-amber-50 text-amber-700"
+  }
+  return "border-slate-200 bg-slate-50 text-slate-700"
+}
+
 export function AvanceActivitiesPanel({ activities }: { activities: ActivityItem[] }) {
   const [open, setOpen] = useState(false)
-  const [filter, setFilter] = useState<"todo" | "programadas" | "ejecutadas" | "completadas">("todo")
+  const [filter, setFilter] = useState<"todo" | "programadas" | "en_proceso" | "completadas">("todo")
 
   const filtered = useMemo(() => {
     if (filter === "todo") return activities
     if (filter === "programadas") {
       return activities.filter((item) => item.estado === "Programada" || item.estado === "Pendiente")
     }
-    if (filter === "ejecutadas") {
-      return activities.filter((item) => ["En proceso", "En redacción", "En revisión", "Ejecutada"].includes(item.estado))
+    if (filter === "en_proceso") {
+      return activities.filter((item) => ["En proceso", "En redacción", "En revisión"].includes(item.estado))
     }
-    return activities.filter((item) => ["Completada", "Publicada"].includes(item.estado))
+    return activities.filter((item) => ["Completada", "Ejecutada"].includes(item.estado))
   }, [activities, filter])
 
   const label =
@@ -41,9 +55,9 @@ export function AvanceActivitiesPanel({ activities }: { activities: ActivityItem
       ? "Todo"
       : filter === "programadas"
         ? "Programadas"
-        : filter === "ejecutadas"
-          ? "Ejecutadas"
-          : "Completadas"
+        : filter === "en_proceso"
+          ? "En proceso"
+          : "Completadas/Ejecutadas"
 
   return (
     <Card>
@@ -51,17 +65,17 @@ export function AvanceActivitiesPanel({ activities }: { activities: ActivityItem
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-base">Actividades programadas</CardTitle>
           <div className="relative">
-            <Button type="button" variant="outline" size="sm" onClick={() => setOpen((value) => !value)} className="min-w-32 justify-between">
+            <Button type="button" variant="outline" size="sm" onClick={() => setOpen((value) => !value)} className="min-w-36 justify-between">
               {label}
               <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
             {open ? (
-              <div className="absolute right-0 top-11 z-10 w-44 overflow-hidden rounded-md border border-border bg-background shadow-lg">
+              <div className="absolute right-0 top-11 z-10 w-52 overflow-hidden rounded-md border border-border bg-background shadow-lg">
                 {[
                   { value: "todo", label: "Todo" },
                   { value: "programadas", label: "Programadas" },
-                  { value: "ejecutadas", label: "Ejecutadas" },
-                  { value: "completadas", label: "Completadas/Publicadas" },
+                  { value: "en_proceso", label: "En proceso" },
+                  { value: "completadas", label: "Completadas/Ejecutadas" },
                 ].map((option) => (
                   <button
                     key={option.value}
@@ -96,16 +110,7 @@ export function AvanceActivitiesPanel({ activities }: { activities: ActivityItem
                     <p className="mt-1 text-sm text-muted-foreground">{actividad.descripcion}</p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    <Badge
-                      variant={
-                        actividad.estado === "En proceso" ||
-                        actividad.estado === "En redacción" ||
-                        actividad.estado === "En revisión" ||
-                        actividad.estado === "Ejecutada"
-                          ? "default"
-                          : "secondary"
-                      }
-                    >
+                    <Badge variant="outline" className={cn("border font-medium", getStatusClasses(actividad.estado))}>
                       {actividad.estado}
                     </Badge>
                     <span className="text-sm text-muted-foreground">{formatDate(actividad.fecha)}</span>

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useMemo, useState } from "react"
 import { BarChart3, BookOpen, ClipboardList, FileText, TrendingUp } from "lucide-react"
@@ -369,7 +369,7 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
           <CardHeader className="flex flex-row items-center justify-between gap-3">
               <CardTitle className="text-base">Producción por Investigador</CardTitle>
             <ChartFilter
-              label="Filtrar producción por investigador"
+              label="Filtrar producciÃ³n por investigador"
               value={productionFilter}
               onChange={setProductionFilter}
               options={[
@@ -436,7 +436,7 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle className="text-base">Necesidades de Formación Identificadas</CardTitle>
             <ChartFilter
-              label="Filtrar necesidades de formación"
+              label="Filtrar necesidades de formaciÃ³n"
               value={needsFilter}
               onChange={setNeedsFilter}
               options={[
@@ -533,3 +533,4 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
     </div>
   )
 }
+

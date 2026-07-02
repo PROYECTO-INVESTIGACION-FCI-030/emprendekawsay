@@ -14,10 +14,6 @@ function formatDateOnly(value: string | null | undefined) {
   return date.toLocaleDateString("es-EC")
 }
 
-function isActividadEjecutada(estado: string) {
-  return ["En proceso", "En redacción", "En revisión", "Ejecutada", "Completada", "Publicada"].includes(estado)
-}
-
 export default async function AvancePage() {
   const [actividadesProyecto, productos] = await Promise.all([getActividadesProyecto(), getScientificProducts()])
 
@@ -38,31 +34,29 @@ export default async function AvancePage() {
     ...productos.flatMap((product) => {
       const items = []
 
-      if (product.fecha_objetivo) {
+      if (product.estado === "publicado") {
+        items.push({
+          id: `${product.id}-ejecutado`,
+          titulo: product.titulo,
+          descripcion: product.descripcion ?? "Sin descripción",
+          fecha: formatDateOnly(product.fecha_publicacion ?? product.fecha_objetivo),
+          estado: "Ejecutada",
+          fuente: "Científica",
+        })
+      } else if (product.fecha_objetivo) {
         items.push({
           id: `${product.id}-planificado`,
           titulo: product.titulo,
           descripcion: product.descripcion ?? "Sin descripción",
           fecha: product.fecha_objetivo,
           estado:
-            product.estado === "publicado"
-              ? "Ejecutada"
-              : product.estado === "en_revision"
-                ? "En revisión"
-                : product.estado === "en_redaccion"
-                  ? "En redacción"
+            product.estado === "en_revision"
+              ? "En revisión"
+              : product.estado === "en_redaccion"
+                ? "En redacción"
+                : product.estado === "en_proceso"
+                  ? "En proceso"
                   : "Programada",
-          fuente: "Científica",
-        })
-      }
-
-      if (product.estado === "publicado" && product.fecha_publicacion) {
-        items.push({
-          id: `${product.id}-publicada`,
-          titulo: product.titulo,
-          descripcion: product.descripcion ?? "Sin descripción",
-          fecha: formatDateOnly(product.fecha_publicacion),
-          estado: "Publicada",
           fuente: "Científica",
         })
       }
@@ -72,9 +66,8 @@ export default async function AvancePage() {
   ].sort((a, b) => a.fecha.localeCompare(b.fecha))
 
   const programadas = actividades.filter((actividad) => actividad.estado === "Programada").length
-  const enProceso = actividades.filter((actividad) => ["En proceso", "En redacción", "En revisión", "Ejecutada"].includes(actividad.estado)).length
-  const completadas = actividades.filter((actividad) => ["Completada", "Publicada"].includes(actividad.estado)).length
-  const pendientes = actividades.filter((actividad) => actividad.estado === "Programada" || actividad.estado === "Pendiente").length
+  const enProceso = actividades.filter((actividad) => ["En proceso", "En redacción", "En revisión"].includes(actividad.estado)).length
+  const completadas = actividades.filter((actividad) => ["Completada", "Ejecutada"].includes(actividad.estado)).length
   const totalActividades = actividades.length
   const avanceGlobal = totalActividades ? Math.round((completadas / totalActividades) * 100) : 0
 
@@ -96,7 +89,7 @@ export default async function AvancePage() {
               <div className="h-2 rounded-full bg-muted">
                 <div className="h-2 rounded-full bg-primary" style={{ width: `${avanceGlobal}%` }} />
               </div>
-              <p className="text-xs text-muted-foreground">{completadas + enProceso} de {totalActividades} actividades entre proyecto y producción científica</p>
+              <p className="text-xs text-muted-foreground">{completadas} de {totalActividades} actividades completadas entre proyecto y producción científica</p>
             </CardContent>
           </Card>
           <Card>
