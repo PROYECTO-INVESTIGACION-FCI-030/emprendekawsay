@@ -28,6 +28,7 @@ async function contextoGestion() {
 
 function revalidar() {
   revalidatePath("/malla-formativa")
+  revalidatePath("/diseno-cursos")
   revalidatePath("/", "layout")
 }
 
