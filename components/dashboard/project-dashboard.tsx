@@ -322,13 +322,13 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
         {topCards.map((card) => (
           <DashboardCard key={card.title} {...card} />
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_1fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 2xl:grid-cols-[1.2fr_1fr_1fr]">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <div>
@@ -431,7 +431,7 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_0.9fr_1.1fr]">
+      <div className="grid grid-cols-1 gap-4 2xl:grid-cols-[1fr_0.9fr_1.1fr]">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle className="text-base">Necesidades de Formación Identificadas</CardTitle>
@@ -467,7 +467,7 @@ export function ProjectDashboard({ data }: { data: ProjectDashboardData }) {
           <CardHeader>
             <CardTitle className="text-base">Estado de los Cursos</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-[0.9fr_1fr] xl:grid-cols-1">
+          <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-[0.9fr_1fr] 2xl:grid-cols-1">
             <ChartContainer config={pieConfig} className="mx-auto h-[190px] w-full">
               <PieChart>
                 <ChartTooltip content={<ChartTooltipContent hideLabel />} />

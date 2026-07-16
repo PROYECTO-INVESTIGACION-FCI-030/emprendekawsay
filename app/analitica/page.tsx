@@ -1,7 +1,7 @@
 import { NeedsAnalytics } from "@/components/analytics/needs-analytics"
 import { AppShell } from "@/components/dashboard/app-shell"
 import { Toolbar } from "@/components/dashboard/header"
-import { getCoursePredictions } from "@/lib/course-prediction"
+import { getCoursePredictionsFast } from "@/lib/course-prediction"
 import { getProjectDashboardData } from "@/lib/project-dashboard"
 import { fallbackProjectDashboardData } from "@/lib/project-dashboard-data"
 
@@ -10,7 +10,7 @@ export default async function AnaliticaPage() {
   let predictionResult = { cursos: [] }
 
   try {
-    const [dashboard, predictions] = await Promise.all([getProjectDashboardData(), getCoursePredictions()])
+    const [dashboard, predictions] = await Promise.all([getProjectDashboardData(), getCoursePredictionsFast()])
     data = dashboard
     predictionResult = predictions
   } catch {

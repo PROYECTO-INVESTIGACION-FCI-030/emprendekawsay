@@ -62,25 +62,21 @@ export function Header({
   }
 
   return (
-    <header className="flex flex-col gap-4 border-b border-border bg-card px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6">
-      <div className="min-w-0">
-        <h1 className="truncate text-lg font-semibold text-foreground">{projectName}</h1>
-        <p className="truncate text-sm text-muted-foreground">{projectDescription}</p>
+    <header className="flex flex-col gap-4 border-b border-border bg-card px-4 py-4 sm:px-6 xl:flex-row xl:items-start xl:justify-between">
+      <div className="min-w-0 flex-1">
+        <h1 className="text-lg font-semibold leading-tight text-foreground sm:text-xl">{projectName}</h1>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{projectDescription}</p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+      <div className="flex flex-wrap items-center gap-3 xl:max-w-[48%] xl:justify-end">
         <Popover>
           <PopoverTrigger
             className="relative rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             aria-label="Notificaciones"
           >
-            {notificacionesActivas ? (
-              <Bell className="h-5 w-5" />
-            ) : (
-              <BellOff className="h-5 w-5" />
-            )}
+            {notificacionesActivas ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
             {notificacionesActivas && noLeidas > 0 && (
-              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+              <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white">
                 {noLeidas}
               </span>
             )}
@@ -106,7 +102,7 @@ export function Header({
                 ) : null}
               </div>
             </div>
-            <div className="max-h-80 overflow-y-auto">
+            <div className="max-h-[70vh] overflow-y-auto">
               {!notificacionesActivas ? (
                 <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
                   <BellOff className="h-6 w-6 text-muted-foreground" />
@@ -115,31 +111,23 @@ export function Header({
                   </p>
                 </div>
               ) : visibles.length === 0 ? (
-                <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                  No tienes notificaciones.
-                </p>
+                <p className="px-4 py-8 text-center text-sm text-muted-foreground">No tienes notificaciones.</p>
               ) : (
                 <ul className="divide-y divide-border">
                   {visibles.map((n) => {
                     const Icon = TIPO_ICON[n.tipo]
                     return (
-                      <li
-                        key={n.id}
-                        className={cn(
-                          "flex gap-3 px-4 py-3",
-                          !n.leida && "bg-secondary/50",
-                        )}
-                      >
+                      <li key={n.id} className={cn("flex gap-3 px-4 py-3", !n.leida && "bg-secondary/50")}>
                         <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", TIPO_COLOR[n.tipo])} />
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-foreground">{n.titulo}</p>
-                          <p className="text-xs text-muted-foreground">{n.mensaje}</p>
+                          <p className="text-xs leading-relaxed text-muted-foreground">{n.mensaje}</p>
                           <p className="mt-1 text-[11px] text-muted-foreground/70">{n.fecha}</p>
                         </div>
                         {!n.leida ? (
                           <button
                             type="button"
-                            className="mt-0.5 inline-flex h-6 items-center rounded-md border border-border px-1.5 text-[10px] font-medium text-muted-foreground hover:bg-secondary"
+                            className="mt-0.5 inline-flex h-6 shrink-0 items-center rounded-md border border-border px-1.5 text-[10px] font-medium text-muted-foreground hover:bg-secondary"
                             onClick={() => onMarkRead?.(n.id)}
                           >
                             Leída
@@ -154,25 +142,20 @@ export function Header({
           </PopoverContent>
         </Popover>
 
-        <Link
-          href="/perfil"
-          className="flex min-w-0 items-center gap-3 rounded-md p-1 transition-colors hover:bg-secondary"
-        >
-          <Avatar className="h-9 w-9">
+        <Link href="/perfil" className="flex min-w-0 max-w-full items-center gap-3 rounded-md p-1 transition-colors hover:bg-secondary">
+          <Avatar className="h-9 w-9 shrink-0">
             {avatarUrl && <AvatarImage src={avatarUrl || "/placeholder.svg"} alt={nombre} />}
-            <AvatarFallback className="bg-primary text-primary-foreground">
-              {initials(nombre)}
-            </AvatarFallback>
+            <AvatarFallback className="bg-primary text-primary-foreground">{initials(nombre)}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 leading-tight">
-            <p className="text-sm font-medium text-foreground">{nombre}</p>
-            <p className="text-xs text-muted-foreground">{rol}</p>
+            <p className="truncate text-sm font-medium text-foreground">{nombre}</p>
+            <p className="truncate text-xs text-muted-foreground">{rol}</p>
           </div>
         </Link>
 
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          className="flex shrink-0 items-center gap-2 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
         >
           <LogOut className="h-4 w-4" />
           <span className="hidden sm:inline">Salir</span>
@@ -194,18 +177,16 @@ export function Toolbar({
   action?: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col gap-3 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-      <div>
-        <h2 className="text-2xl font-semibold text-foreground">{titulo}</h2>
-        <p className="text-sm text-muted-foreground">{descripcion}</p>
+    <div className="flex flex-col gap-3 px-4 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+      <div className="min-w-0">
+        <h2 className="text-2xl font-semibold leading-tight text-foreground">{titulo}</h2>
+        <p className="text-sm leading-relaxed text-muted-foreground">{descripcion}</p>
       </div>
-      <div className="flex items-center gap-3">
-        {showControls && (
-          null
-        )}
+      <div className="flex flex-wrap items-center gap-3">
+        {showControls && null}
         {action}
         {showControls && !action && (
-          <button className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
+          <button className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 sm:w-auto">
             <Download className="h-4 w-4" />
             Exportar reporte
           </button>

@@ -126,12 +126,12 @@ export function RoleDashboard({ rolRaw }: { rolRaw: RoleKey }) {
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{data.subtitle}</p>
           </div>
           <Link href={data.actionHref}>
-            <Button>{data.action}</Button>
+            <Button className="w-full sm:w-auto">{data.action}</Button>
           </Link>
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
         {data.cards.map((card) => (
           <Link key={card.label} href={card.href}>
             <Card className="h-full p-5 transition-colors hover:bg-secondary/60">
@@ -150,7 +150,7 @@ export function RoleDashboard({ rolRaw }: { rolRaw: RoleKey }) {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid grid-cols-1 gap-4 2xl:grid-cols-[1.2fr_0.8fr]">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Trabajo principal</CardTitle>

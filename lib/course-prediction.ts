@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server"
+import { unstable_cache } from "next/cache"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 export type CoursePrediction = {
   id: string
@@ -210,9 +211,12 @@ async function getGeminiSuggestions(rows: SurveyRow[]) {
   ].join("\n")
 
   try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 6000)
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
       body: JSON.stringify({
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         generationConfig: {
@@ -221,6 +225,7 @@ async function getGeminiSuggestions(rows: SurveyRow[]) {
         },
       }),
     })
+    clearTimeout(timeout)
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "")
@@ -247,7 +252,10 @@ async function getGeminiSuggestions(rows: SurveyRow[]) {
     const suggestions = normalizeGeminiSuggestions(parsed)
     if (!suggestions.length) return { suggestions: [], reason: "Gemini devolvió JSON, pero sin sugerencias válidas." }
     return { suggestions, reason: "Gemini respondió correctamente." }
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return { suggestions: [], reason: "Gemini tardó demasiado en responder. Se usará la predicción de respaldo." }
+    }
     return { suggestions: [], reason: "No se pudo interpretar la respuesta de Gemini." }
   }
 }
@@ -329,8 +337,8 @@ const templates: Template[] = [
   },
 ]
 
-export async function getCoursePredictions(): Promise<CoursePredictionResult> {
-  const supabase = await createClient()
+async function buildCoursePredictions(useGemini: boolean): Promise<CoursePredictionResult> {
+  const supabase = createAdminClient()
   const { data, error, count } = await supabase
     .from("cuestionario_limpio_respuestas")
     .select(
@@ -388,7 +396,9 @@ export async function getCoursePredictions(): Promise<CoursePredictionResult> {
     } satisfies CoursePrediction
   })
 
-  const geminiResult = await getGeminiSuggestions(rows)
+  const geminiResult = useGemini
+    ? await getGeminiSuggestions(rows)
+    : { suggestions: [], reason: "Vista optimizada con predicción de respaldo." }
   const source: "gemini" | "fallback" = geminiResult.suggestions.length ? "gemini" : "fallback"
   const suggested = (geminiResult.suggestions.length ? geminiResult.suggestions : [])
     .map((item, index) => {
@@ -460,3 +470,15 @@ export async function getCoursePredictions(): Promise<CoursePredictionResult> {
     sourceReason: geminiResult.reason,
   }
 }
+
+export const getCoursePredictions = unstable_cache(
+  async (): Promise<CoursePredictionResult> => buildCoursePredictions(true),
+  ["course-predictions-full"],
+  { revalidate: 300 }
+)
+
+export const getCoursePredictionsFast = unstable_cache(
+  async (): Promise<CoursePredictionResult> => buildCoursePredictions(false),
+  ["course-predictions-fast"],
+  { revalidate: 120 }
+)

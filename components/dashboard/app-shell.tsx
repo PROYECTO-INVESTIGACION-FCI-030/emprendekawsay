@@ -22,10 +22,12 @@ export async function AppShell({ children }: { children: ReactNode }) {
   const mobileNavItems = navItems.filter((item) => visibleForRole(item, ctx.rolRaw, projectInfo))
 
   return (
-    <div className="flex min-h-screen flex-col bg-background lg:h-screen lg:flex-row lg:overflow-hidden">
+    <div className="flex min-h-screen flex-col bg-background lg:min-h-dvh lg:flex-row">
       <Sidebar rolRaw={ctx.rolRaw} projectInfo={projectInfo} />
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+
+      <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
         <NavigationHistoryTracker />
+
         <div className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <HeaderSync
             initialProjectName={projectInfo.nombre}
@@ -38,8 +40,9 @@ export async function AppShell({ children }: { children: ReactNode }) {
             initialReadIds={readIds}
             userId={ctx.perfil?.id ?? null}
           />
+
           <div className="border-b border-border bg-card px-3 py-3 lg:hidden">
-            <div className="mb-2 flex items-center justify-between">
+            <div className="mb-2 flex items-center justify-between gap-3">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Navegación rápida</p>
               <p className="text-[11px] text-muted-foreground">{mobileNavItems.length} secciones</p>
             </div>
@@ -49,7 +52,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                    "shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                     "border-border bg-background text-foreground hover:bg-secondary",
                   )}
                 >
@@ -60,8 +63,8 @@ export async function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1600px]">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="mx-auto w-full max-w-[1720px]">
             {children}
             <footer className="border-t border-border px-4 py-4 text-center text-xs text-muted-foreground sm:px-6">
               &copy; 2026 Universidad de Guayaquil &middot; Plataforma de Gestión de Proyectos FCI

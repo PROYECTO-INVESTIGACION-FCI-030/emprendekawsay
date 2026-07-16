@@ -26,7 +26,7 @@ function ProjectInfo({ info }: { info: ProjectInfoData }) {
         </div>
       </dl>
       <div className="mt-4">
-        <div className="mb-1.5 flex items-center justify-between text-xs">
+        <div className="mb-1.5 flex items-center justify-between gap-2 text-xs">
           <span className="text-slate-500">Tiempo transcurrido</span>
           <span className="font-semibold text-slate-800">
             {info.mesesTranscurridos} / {info.duracionMeses} meses
@@ -52,7 +52,7 @@ export function Sidebar({
   const visibles = navItems.filter((item) => visibleForRole(item, rolRaw, projectInfo))
 
   return (
-    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white text-slate-800 lg:flex">
+    <aside className="hidden lg:sticky lg:top-0 lg:flex lg:min-h-dvh lg:w-64 lg:shrink-0 lg:flex-col lg:border-r lg:border-slate-200 lg:bg-white lg:text-slate-800 xl:w-72">
       <Link href="/" className="flex items-center gap-3 border-b border-slate-200 bg-[#0d4f93] px-4 py-4 text-white">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-white/30">
           <Image
@@ -64,9 +64,9 @@ export function Sidebar({
             priority
           />
         </div>
-        <div className="leading-tight">
+        <div className="min-w-0 leading-tight">
           <p className="text-[0.78rem] font-semibold uppercase tracking-wide text-white/95">Universidad</p>
-          <p className="text-xs text-white/80">de Guayaquil</p>
+          <p className="truncate text-xs text-white/80">de Guayaquil</p>
         </div>
       </Link>
 

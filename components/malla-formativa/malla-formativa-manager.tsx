@@ -121,7 +121,7 @@ export function MallaFormativaManager({ cursos, materiales }: { cursos: Material
 
         {message ? <div className="mb-4 rounded-md border border-border bg-card px-4 py-3 text-sm text-foreground">{message}</div> : null}
 
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="grid gap-4 2xl:grid-cols-2">
           {cursos.map((curso) => {
             const items = groupedByCourse.get(curso.id) ?? []
             return (

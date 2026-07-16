@@ -30,7 +30,7 @@ export function AiCoursePredictor({
     return (
       <div className="min-h-full bg-[#f4f8fc] pb-10">
         <section className="border-b-4 border-[#00a6d6] bg-[#00529b] px-4 py-7 text-white sm:px-6">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <div className="flex items-center gap-2 text-sm font-medium text-cyan-100">
                 <Bot className="h-5 w-5" />
@@ -66,7 +66,7 @@ export function AiCoursePredictor({
   return (
     <div className="min-h-full bg-[#f4f8fc] pb-10">
       <section className="border-b-4 border-[#00a6d6] bg-[#00529b] px-4 py-7 text-white sm:px-6">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm font-medium text-cyan-100"><Bot className="h-5 w-5" />Agente IA de prediccion formativa</div>
             <h2 className="mt-2 text-2xl font-semibold">Cursos recomendados desde el diagnostico</h2>
@@ -102,7 +102,7 @@ export function AiCoursePredictor({
               La IA analiza la base de respuestas y agrupa a las emprendedoras por patrones de formación y demanda.
             </p>
           </div>
-          <div className="grid gap-4 p-4 lg:grid-cols-[1.1fr_1.4fr]">
+          <div className="grid gap-4 p-4 2xl:grid-cols-[1.1fr_1.4fr]">
             <div className="space-y-3">
               <div className="rounded-md border border-[#d7e7f2] bg-[#f8fbfd] p-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-[#003b6f]">
@@ -122,7 +122,7 @@ export function AiCoursePredictor({
                 ))}
               </div>
             </div>
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-3 xl:grid-cols-2">
               {(
                 [
                   ["Parroquia", profile.segmentos.parroquia],
@@ -160,7 +160,7 @@ export function AiCoursePredictor({
                 <div><p className="text-xs font-semibold uppercase text-[#0077b6]">Bloque {block}</p><h3 className="font-semibold text-[#003b6f]">{options[0]?.bloque}</h3></div>
                 <span className="w-fit rounded-full bg-[#00529b] px-3 py-1 text-xs font-semibold text-white">Brecha detectada: {options[0]?.brecha}%</span>
               </div>
-              <div className="grid gap-3 p-4 lg:grid-cols-2">
+              <div className="grid gap-3 p-4 2xl:grid-cols-2">
                 {options.map((option) => {
                   const active = selected[block] === option.id
                   return (

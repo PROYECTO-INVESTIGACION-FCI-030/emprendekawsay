@@ -79,7 +79,7 @@ export function NeedsAnalytics({
         </Card>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+      <div className="grid gap-4 2xl:grid-cols-[1.15fr_0.85fr]">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Necesidades detectadas por preguntas y respuestas</CardTitle>
@@ -135,7 +135,7 @@ export function NeedsAnalytics({
         </Card>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Competencias calculadas</CardTitle>
