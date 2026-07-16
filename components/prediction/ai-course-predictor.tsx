@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState, useTransition } from "react"
 import { Bot, CheckCircle2, Database, LineChart, Plus, Sparkles, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -13,11 +14,13 @@ export function AiCoursePredictor({
   profile,
   source,
   sourceReason,
+  geminiEnabled,
 }: {
   predictions: CoursePrediction[]
   profile: CoursePredictionProfile
   source: "gemini" | "fallback"
   sourceReason?: string
+  geminiEnabled: boolean
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -25,33 +28,6 @@ export function AiCoursePredictor({
   const [message, setMessage] = useState("")
   const blocks = [...new Set(predictions.map((prediction) => prediction.numeroBloque))]
   const responseCount = predictions[0]?.respuestas ?? 0
-
-  if (!predictions.length) {
-    return (
-      <div className="min-h-full bg-[#f4f8fc] pb-10">
-        <section className="border-b-4 border-[#00a6d6] bg-[#00529b] px-4 py-7 text-white sm:px-6">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-sm font-medium text-cyan-100">
-                <Bot className="h-5 w-5" />
-                Agente IA de prediccion formativa
-              </div>
-              <h2 className="mt-2 text-2xl font-semibold">Cursos recomendados desde el diagnostico</h2>
-              <p className="mt-2 max-w-3xl text-sm text-blue-100">
-                Todavia no hay respuestas registradas en la encuesta, por eso la IA no puede sugerir cursos reales.
-              </p>
-            </div>
-          </div>
-        </section>
-        <div className="px-4 pt-6 sm:px-6">
-          <div className="rounded-md border border-[#bdd7ea] bg-white px-5 py-8 text-sm text-muted-foreground shadow-sm">
-            Cuando existan respuestas en <span className="font-medium text-[#00529b]">cuestionario_limpio_respuestas</span>, aqui se generaran
-            automaticamente los cursos sugeridos por bloque.
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   function createSelected(block: number) {
     const prediction = predictions.find((item) => item.id === selected[block])
@@ -63,28 +39,79 @@ export function AiCoursePredictor({
     })
   }
 
+  const geminiButton = geminiEnabled ? (
+    <Link href="/prediccion" className="inline-flex">
+      <Button variant="outline" className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+        Desactivar Gemini
+      </Button>
+    </Link>
+  ) : (
+    <Link href="/prediccion?gemini=1" className="inline-flex">
+      <Button className="bg-white text-[#00529b] hover:bg-cyan-50">
+        Activar Gemini
+      </Button>
+    </Link>
+  )
+
+  if (!predictions.length) {
+    return (
+      <div className="min-h-full bg-[#f4f8fc] pb-10">
+        <section className="border-b-4 border-[#00a6d6] bg-[#00529b] px-4 py-7 text-white sm:px-6">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-medium text-cyan-100">
+                <Bot className="h-5 w-5" />
+                Agente IA de predicción formativa
+              </div>
+              <h2 className="mt-2 text-2xl font-semibold">Cursos recomendados desde el diagnóstico</h2>
+              <p className="mt-2 max-w-3xl text-sm text-blue-100">
+                Todavía no hay respuestas registradas en la encuesta, por eso la IA no puede sugerir cursos reales.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">{geminiButton}</div>
+          </div>
+        </section>
+        <div className="px-4 pt-6 sm:px-6">
+          <div className="rounded-md border border-[#bdd7ea] bg-white px-5 py-8 text-sm text-muted-foreground shadow-sm">
+            Cuando existan respuestas en <span className="font-medium text-[#00529b]">cuestionario_limpio_respuestas</span>, aquí se generarán
+            automáticamente los cursos sugeridos por bloque.
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-full bg-[#f4f8fc] pb-10">
       <section className="border-b-4 border-[#00a6d6] bg-[#00529b] px-4 py-7 text-white sm:px-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-sm font-medium text-cyan-100"><Bot className="h-5 w-5" />Agente IA de prediccion formativa</div>
-            <h2 className="mt-2 text-2xl font-semibold">Cursos recomendados desde el diagnostico</h2>
-            <p className="mt-2 max-w-3xl text-sm text-blue-100">Analiza brechas por bloque y propone cursos específicos. Selecciona una propuesta por bloque para enviarla a Diseño de Cursos.</p>
-          </div>
-          <div className="flex items-center gap-3 rounded-md border border-white/20 bg-white/10 px-4 py-3">
-            <Database className="h-5 w-5 text-cyan-200" />
-            <div>
-              <p className="text-xl font-semibold">{responseCount}</p>
-              <p className="text-xs text-blue-100">respuestas analizadas</p>
+            <div className="flex items-center gap-2 text-sm font-medium text-cyan-100">
+              <Bot className="h-5 w-5" />
+              Agente IA de predicción formativa
             </div>
+            <h2 className="mt-2 text-2xl font-semibold">Cursos recomendados desde el diagnóstico</h2>
+            <p className="mt-2 max-w-3xl text-sm text-blue-100">
+              Analiza brechas por bloque y propone cursos específicos. Selecciona una propuesta por bloque para enviarla a Diseño de Cursos.
+            </p>
           </div>
-          <div className="max-w-md rounded-md border border-white/15 bg-white/10 px-3 py-1.5 text-left text-[11px] leading-4 text-blue-50">
-            <div className="flex items-center gap-2">
-              <span className={cn("h-2 w-2 shrink-0 rounded-full", source === "gemini" ? "bg-emerald-300" : "bg-amber-300")} />
-              <span className="font-semibold text-white">{source === "gemini" ? "Gemini activo" : "Fallback activo"}</span>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-3 rounded-md border border-white/20 bg-white/10 px-4 py-3">
+              <Database className="h-5 w-5 text-cyan-200" />
+              <div>
+                <p className="text-xl font-semibold">{responseCount}</p>
+                <p className="text-xs text-blue-100">respuestas analizadas</p>
+              </div>
             </div>
-            {sourceReason ? <p className="mt-1.5 text-blue-50/90">{sourceReason}</p> : null}
+            {geminiButton}
+            <div className="max-w-md rounded-md border border-white/15 bg-white/10 px-3 py-1.5 text-left text-[11px] leading-4 text-blue-50">
+              <div className="flex items-center gap-2">
+                <span className={cn("h-2 w-2 shrink-0 rounded-full", source === "gemini" ? "bg-emerald-300" : "bg-amber-300")} />
+                <span className="font-semibold text-white">{source === "gemini" ? "Gemini activo" : "Fallback activo"}</span>
+              </div>
+              {sourceReason ? <p className="mt-1.5 text-blue-50/90">{sourceReason}</p> : null}
+            </div>
           </div>
         </div>
       </section>
@@ -110,7 +137,7 @@ export function AiCoursePredictor({
                   Resumen general
                 </div>
                 <p className="mt-2 text-3xl font-bold text-[#00529b]">{profile.totalRegistros}</p>
-                <p className="text-sm text-muted-foreground">registros analizados para la prediccion de cursos</p>
+                <p className="text-sm text-muted-foreground">registros analizados para la predicción de cursos</p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 {profile.perfilGeneral.map((item) => (
@@ -126,8 +153,8 @@ export function AiCoursePredictor({
               {(
                 [
                   ["Parroquia", profile.segmentos.parroquia],
-                  ["Nivel de instruccion", profile.segmentos.nivelInstruccion],
-                  ["Sector economico", profile.segmentos.sectorEconomico],
+                  ["Nivel de instrucción", profile.segmentos.nivelInstruccion],
+                  ["Sector económico", profile.segmentos.sectorEconomico],
                   ["Ingreso mensual", profile.segmentos.ingresoMensual],
                   ["Modalidad preferida", profile.segmentos.modalidadPreferida],
                 ] as const
@@ -157,25 +184,47 @@ export function AiCoursePredictor({
           return (
             <section key={block} className="overflow-hidden rounded-md border border-[#bdd7ea] bg-white shadow-sm">
               <div className="flex flex-col gap-2 border-b border-[#d7e7f2] bg-[#eaf4fb] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <div><p className="text-xs font-semibold uppercase text-[#0077b6]">Bloque {block}</p><h3 className="font-semibold text-[#003b6f]">{options[0]?.bloque}</h3></div>
-                <span className="w-fit rounded-full bg-[#00529b] px-3 py-1 text-xs font-semibold text-white">Brecha detectada: {options[0]?.brecha}%</span>
+                <div>
+                  <p className="text-xs font-semibold uppercase text-[#0077b6]">Bloque {block}</p>
+                  <h3 className="font-semibold text-[#003b6f]">{options[0]?.bloque}</h3>
+                </div>
+                <span className="w-fit rounded-full bg-[#00529b] px-3 py-1 text-xs font-semibold text-white">
+                  Brecha detectada: {options[0]?.brecha}%
+                </span>
               </div>
               <div className="grid gap-3 p-4 2xl:grid-cols-2">
                 {options.map((option) => {
                   const active = selected[block] === option.id
                   return (
-                    <button key={option.id} type="button" onClick={() => setSelected((current) => ({ ...current, [block]: option.id }))} className={cn("flex min-h-36 gap-3 rounded-md border p-4 text-left transition-colors", active ? "border-[#0077b6] bg-[#eef8fd] ring-2 ring-[#00a6d6]/20" : "border-border hover:border-[#8bc9e8]")}>
-                      <span className={cn("mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border", active ? "border-[#0077b6] bg-[#0077b6] text-white" : "border-muted-foreground/30")}>
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => setSelected((current) => ({ ...current, [block]: option.id }))}
+                      className={cn(
+                        "flex min-h-36 gap-3 rounded-md border p-4 text-left transition-colors",
+                        active ? "border-[#0077b6] bg-[#eef8fd] ring-2 ring-[#00a6d6]/20" : "border-border hover:border-[#8bc9e8]"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border",
+                          active ? "border-[#0077b6] bg-[#0077b6] text-white" : "border-muted-foreground/30"
+                        )}
+                      >
                         {active ? <CheckCircle2 className="h-4 w-4" /> : <Sparkles className="h-4 w-4 text-[#0077b6]" />}
                       </span>
-                      <span><span className="block font-semibold text-[#003b6f]">{option.titulo}</span><span className="mt-2 block text-sm leading-6 text-muted-foreground">{option.descripcion}</span></span>
+                      <span>
+                        <span className="block font-semibold text-[#003b6f]">{option.titulo}</span>
+                        <span className="mt-2 block text-sm leading-6 text-muted-foreground">{option.descripcion}</span>
+                      </span>
                     </button>
                   )
                 })}
               </div>
               <div className="flex justify-end border-t border-[#d7e7f2] bg-[#f8fbfd] px-4 py-3">
                 <Button disabled={!selected[block] || pending} onClick={() => createSelected(block)} className="bg-[#00529b] hover:bg-[#003f78]">
-                  <Plus className="mr-1.5 h-4 w-4" />{pending ? "Creando..." : "Crear curso seleccionado"}
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  {pending ? "Creando..." : "Crear curso seleccionado"}
                 </Button>
               </div>
             </section>

@@ -195,7 +195,7 @@ function normalizeGeminiSuggestions(value: unknown): GeminiCourseSuggestion[] {
 
 async function getGeminiSuggestions(rows: SurveyRow[]) {
   const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) return { suggestions: [], reason: "Falta GEMINI_API_KEY en el entorno." }
+  if (!apiKey) return { suggestions: [], reason: "Gemini no disponible. Usando respaldo." }
 
   const summary = buildCriticalNeedSummary(rows)
   const prompt = [
@@ -232,13 +232,13 @@ async function getGeminiSuggestions(rows: SurveyRow[]) {
       if (response.status === 429) {
         return {
           suggestions: [],
-          reason: "Gemini alcanzó el límite temporal del plan gratuito. Se usará la predicción de respaldo.",
+          reason: "Gemini no disponible. Usando respaldo.",
         }
       }
       if (response.status === 503) {
         return {
           suggestions: [],
-          reason: "Gemini está temporalmente saturado. Se usará la predicción de respaldo.",
+          reason: "Gemini no disponible. Usando respaldo.",
         }
       }
       return { suggestions: [], reason: `Gemini respondió ${response.status}. ${errorText || "Sin detalle."}`.trim() }
@@ -246,17 +246,17 @@ async function getGeminiSuggestions(rows: SurveyRow[]) {
 
     const payload = await response.json()
     const text = payload?.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text ?? "").join("") ?? ""
-    if (!text) return { suggestions: [], reason: "Gemini no devolvió texto utilizable." }
+    if (!text) return { suggestions: [], reason: "Gemini no disponible. Usando respaldo." }
 
     const parsed = JSON.parse(text)
     const suggestions = normalizeGeminiSuggestions(parsed)
-    if (!suggestions.length) return { suggestions: [], reason: "Gemini devolvió JSON, pero sin sugerencias válidas." }
+    if (!suggestions.length) return { suggestions: [], reason: "Gemini no disponible. Usando respaldo." }
     return { suggestions, reason: "Gemini respondió correctamente." }
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      return { suggestions: [], reason: "Gemini tardó demasiado en responder. Se usará la predicción de respaldo." }
+      return { suggestions: [], reason: "Gemini no disponible. Usando respaldo." }
     }
-    return { suggestions: [], reason: "No se pudo interpretar la respuesta de Gemini." }
+    return { suggestions: [], reason: "Gemini no disponible. Usando respaldo." }
   }
 }
 
@@ -398,7 +398,7 @@ async function buildCoursePredictions(useGemini: boolean): Promise<CoursePredict
 
   const geminiResult = useGemini
     ? await getGeminiSuggestions(rows)
-    : { suggestions: [], reason: "Vista optimizada con predicción de respaldo." }
+    : { suggestions: [], reason: "Modo rápido sin Gemini." }
   const source: "gemini" | "fallback" = geminiResult.suggestions.length ? "gemini" : "fallback"
   const suggested = (geminiResult.suggestions.length ? geminiResult.suggestions : [])
     .map((item, index) => {
