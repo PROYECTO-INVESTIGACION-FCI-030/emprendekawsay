@@ -171,8 +171,15 @@ function buildCriticalNeedSummary(rows: SurveyRow[]) {
 }
 
 function normalizeGeminiSuggestions(value: unknown): GeminiCourseSuggestion[] {
-  if (!Array.isArray(value)) return []
-  return value
+  const items = Array.isArray(value)
+    ? value
+    : value && typeof value === "object" && Array.isArray((value as { cursos?: unknown }).cursos)
+      ? (value as { cursos: unknown[] }).cursos
+      : value && typeof value === "object" && Array.isArray((value as { sugerencias?: unknown }).sugerencias)
+        ? (value as { sugerencias: unknown[] }).sugerencias
+        : []
+
+  return items
     .map((item) => {
       if (!item || typeof item !== "object") return null
       const candidate = item as Partial<GeminiCourseSuggestion>
@@ -212,8 +219,9 @@ async function getGeminiSuggestions(rows: SurveyRow[]) {
 
   try {
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 6000)
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
+    const timeout = setTimeout(() => controller.abort(), 18000)
+    const model = process.env.GEMINI_MODEL?.trim() || "gemini-3.5-flash"
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       signal: controller.signal,
@@ -248,7 +256,12 @@ async function getGeminiSuggestions(rows: SurveyRow[]) {
     const text = payload?.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text ?? "").join("") ?? ""
     if (!text) return { suggestions: [], reason: "Gemini no disponible. Usando respaldo." }
 
-    const parsed = JSON.parse(text)
+    const cleanText = text
+      .trim()
+      .replace(/^```(?:json)?/i, "")
+      .replace(/```$/i, "")
+      .trim()
+    const parsed = JSON.parse(cleanText)
     const suggestions = normalizeGeminiSuggestions(parsed)
     if (!suggestions.length) return { suggestions: [], reason: "Gemini no disponible. Usando respaldo." }
     return { suggestions, reason: "Gemini respondió correctamente." }
@@ -471,11 +484,9 @@ async function buildCoursePredictions(useGemini: boolean): Promise<CoursePredict
   }
 }
 
-export const getCoursePredictions = unstable_cache(
-  async (): Promise<CoursePredictionResult> => buildCoursePredictions(true),
-  ["course-predictions-full"],
-  { revalidate: 300 }
-)
+export async function getCoursePredictions(): Promise<CoursePredictionResult> {
+  return buildCoursePredictions(true)
+}
 
 export const getCoursePredictionsFast = unstable_cache(
   async (): Promise<CoursePredictionResult> => buildCoursePredictions(false),

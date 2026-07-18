@@ -1,6 +1,9 @@
 import { AiCoursePredictor } from "@/components/prediction/ai-course-predictor"
 import { AppShell } from "@/components/dashboard/app-shell"
 import { getCoursePredictions, getCoursePredictionsFast } from "@/lib/course-prediction"
+import type { CoursePrediction, CoursePredictionProfile } from "@/lib/course-prediction"
+
+export const dynamic = "force-dynamic"
 
 export default async function PrediccionPage({
   searchParams,
@@ -11,8 +14,8 @@ export default async function PrediccionPage({
   const geminiParam = params.gemini
   const geminiEnabled = Array.isArray(geminiParam) ? geminiParam.includes("1") : geminiParam === "1"
 
-  let cursos = []
-  let perfil = {
+  let cursos: CoursePrediction[] = []
+  let perfil: CoursePredictionProfile = {
     totalRegistros: 0,
     perfilGeneral: [],
     segmentos: {
@@ -26,7 +29,7 @@ export default async function PrediccionPage({
     },
   }
   let source: "gemini" | "fallback" = "fallback"
-  let sourceReason = geminiEnabled ? "Sin datos disponibles." : "Vista rápida cargada sin Gemini."
+  let sourceReason: string | undefined = geminiEnabled ? "Sin datos disponibles." : "Vista rápida cargada sin Gemini."
 
   try {
     const result = geminiEnabled ? await getCoursePredictions() : await getCoursePredictionsFast()
